@@ -1,2 +1,7 @@
 # Project exclude paths
 /target/
+pom.xml
+CloudStorage.iml
+client
+server
+.gitignore
