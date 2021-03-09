@@ -72,7 +72,7 @@ public class Client {
 
 		uploadButton.addActionListener(a -> {
 			System.out.println(sendFile(ta.getText()));
-			if (listModel.contains(ta.getText()) || (ta.getText().contains(""))){
+			if (listModel.contains(ta.getText())){
 
 			}else {
 				listModel.addElement(ta.getText());
