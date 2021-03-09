@@ -17,6 +17,7 @@ public class Client {
 	private DefaultListModel<String> listModel;
 
 
+
 	public Client() throws IOException {
 		socket = new Socket("localhost", 1235);
 		in = new DataInputStream(socket.getInputStream());
