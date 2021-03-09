@@ -1,5 +1,6 @@
 package client;
 
+
 import javax.swing.*;
 import java.awt.*;
 import java.io.*;
@@ -12,6 +13,8 @@ public class Client {
 
 	private int height = 300;
 	private int width = 400;
+
+	private DefaultListModel<String> listModel;
 
 
 	public Client() throws IOException {
@@ -29,6 +32,8 @@ public class Client {
 			e.printStackTrace();
 		}
 
+		listModel = new DefaultListModel<String>();
+
 		JFrame frame = new JFrame("Cloud Storage");
 		frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		frame.setSize(new Dimension(width,height));
@@ -41,7 +46,10 @@ public class Client {
 
 		File rootFolder = new File("server");
 		String[] filesTemp = rootFolder.list();
-		JList list = new JList(filesTemp);
+		for (int i=0; i < filesTemp.length; i++){
+			listModel.addElement(filesTemp[i]);
+		}
+		JList<String> list = new JList<String>(listModel);
 
 		JButton uploadButton = new JButton("Upload");
 		uploadButton.setSize(20,40);
@@ -63,6 +71,12 @@ public class Client {
 
 		uploadButton.addActionListener(a -> {
 			System.out.println(sendFile(ta.getText()));
+			if (listModel.contains(ta.getText()) || (ta.getText().contains(""))){
+
+			}else {
+				listModel.addElement(ta.getText());
+				System.out.println("Новый :" + listModel);
+			}
 		});
 
 		downloadButton.addActionListener(a -> {
@@ -70,9 +84,29 @@ public class Client {
 		});
 		removeButton.addActionListener(a -> {
 			System.out.println(remove(ta.getText()));
+
+			for (int i = 0; i < listModel.size(); i++) {
+				System.out.println("ta :" + ta.getText());
+
+
+				if (listModel.getElementAt(i).contains(ta.getText())){
+					System.out.println("Сработало перед удалением: " + listModel.getElementAt(i));
+					listModel.remove(i);
+					System.out.println("Новый :" + listModel);
+					break;
+
+
+				}
+
+
+			}
+
+
+
+
 		});
 		list.addListSelectionListener(a ->{
-			ta.setText(list.getSelectedValue().toString());
+			ta.setText(list.getSelectedValue());
 		});
 	}
 
