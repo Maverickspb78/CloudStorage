@@ -5,6 +5,10 @@ import javax.swing.*;
 import java.awt.*;
 import java.io.*;
 import java.net.Socket;
+import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 
 public class Client {
 	private final Socket socket;
@@ -14,12 +18,12 @@ public class Client {
 	private int height = 300;
 	private int width = 400;
 
-	private DefaultListModel<String> listModel;
+//	private DefaultListModel<String> listModel;
 
 
 
 	public Client() throws IOException {
-		socket = new Socket("localhost", 1235);
+		socket = new Socket("localhost", 1234);
 		in = new DataInputStream(socket.getInputStream());
 		out = new DataOutputStream(socket.getOutputStream());
 		runClient();
@@ -27,13 +31,7 @@ public class Client {
 
 	private void runClient() {
 
-		try {
-			System.out.println(in.readUTF());
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
-
-		listModel = new DefaultListModel<String>();
+//		listModel = new DefaultListModel<String>();
 
 		JFrame frame = new JFrame("Cloud Storage");
 		frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
@@ -42,15 +40,19 @@ public class Client {
 		JPanel panel = new JPanel();
 		JTextArea ta = new JTextArea();
 
+		JList<String> list = new JList<>();
+		DefaultListModel<String> myModel = new DefaultListModel<>();
+		list.setModel(myModel);
+
 		// TODO: 02.03.2021
 		// list file - JList
 
-		File rootFolder = new File("server");
-		String[] filesTemp = rootFolder.list();
-		for (int i=0; i < filesTemp.length; i++){
-			listModel.addElement(filesTemp[i]);
-		}
-		JList<String> list = new JList<String>(listModel);
+//		File rootFolder = new File("server");
+//		String[] filesTemp = rootFolder.list();
+//		for (int i=0; i < filesTemp.length; i++){
+//			listModel.addElement(filesTemp[i]);
+//		}
+//		JList<String> list = new JList<String>(listModel);
 
 		JButton uploadButton = new JButton("Upload");
 		uploadButton.setSize(20,40);
@@ -62,22 +64,24 @@ public class Client {
 		removeButton.setSize(20,40);
 
 		frame.getContentPane().add(BorderLayout.NORTH, ta);
-		frame.getContentPane().add(BorderLayout.CENTER, list);
+		frame.getContentPane().add(BorderLayout.CENTER, new JScrollPane(list));
 		frame.getContentPane().add(BorderLayout.SOUTH, panel);
 		panel.add(uploadButton);
 		panel.add(downloadButton);
 		panel.add(removeButton);
 
+		fillList(myModel);
+
 		frame.setVisible(true);
 
 		uploadButton.addActionListener(a -> {
 			System.out.println(sendFile(ta.getText()));
-			if (listModel.contains(ta.getText())){
-
-			}else {
-				listModel.addElement(ta.getText());
-				System.out.println("Новый :" + listModel);
-			}
+//			if (listModel.contains(ta.getText())){
+//
+//			}else {
+//				listModel.addElement(ta.getText());
+//				System.out.println("Новый :" + listModel);
+//			}
 		});
 
 		downloadButton.addActionListener(a -> {
@@ -86,21 +90,21 @@ public class Client {
 		removeButton.addActionListener(a -> {
 			System.out.println(remove(ta.getText()));
 
-			for (int i = 0; i < listModel.size(); i++) {
-				System.out.println("ta :" + ta.getText());
-
-
-				if (listModel.getElementAt(i).contains(ta.getText())){
-					System.out.println("Сработало перед удалением: " + listModel.getElementAt(i));
-					listModel.remove(i);
-					System.out.println("Новый :" + listModel);
-					break;
-
-
-				}
-
-
-			}
+//			for (int i = 0; i < listModel.size(); i++) {
+//				System.out.println("ta :" + ta.getText());
+//
+//
+//				if (listModel.getElementAt(i).contains(ta.getText())){
+//					System.out.println("Сработало перед удалением: " + listModel.getElementAt(i));
+//					listModel.remove(i);
+//					System.out.println("Новый :" + listModel);
+//					break;
+//
+//
+//				}
+//
+//
+//			}
 
 
 
@@ -109,6 +113,36 @@ public class Client {
 		list.addListSelectionListener(a ->{
 			ta.setText(list.getSelectedValue());
 		});
+	}
+
+	private void fillList(DefaultListModel<String> myModel) {
+		List<String> list =  downloadFileList();
+		myModel.clear();
+		for (String filename : list) {
+			myModel.addElement(filename);
+		}
+	}
+
+	private List<String> downloadFileList() {
+		List<String> list = new ArrayList<String>();
+		try {
+			StringBuilder sb = new StringBuilder();
+			out.write("list-files".getBytes(StandardCharsets.UTF_8));
+			while (true) {
+				byte[] buffer = new byte[512];
+				int size = in.read(buffer);
+				sb.append(new String(buffer, 0, size));
+				if (sb.toString().endsWith("end")) {
+					break;
+				}
+			}
+			String fileString = sb.substring(0, sb.toString().length() - 4);
+			list = Arrays.asList(fileString.split("\n"));
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+
+		return list;
 	}
 
 	private String sendFile(String filename) {
