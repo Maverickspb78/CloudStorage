@@ -1,6 +1,8 @@
 package client;
 
 
+import io.netty.buffer.ByteBuf;
+
 import javax.swing.*;
 import java.awt.*;
 import java.io.*;
@@ -68,6 +70,7 @@ public class Client {
 
 		uploadButton.addActionListener(a -> {
 			System.out.println(sendFile(ta.getText()));
+			fillList(myModel);
 		});
 		downloadButton.addActionListener(a -> {
 			System.out.println(downloadFile(ta.getText()));
@@ -97,7 +100,7 @@ public class Client {
 		List<String> list = new ArrayList<String>();
 		try {
 			StringBuilder sb = new StringBuilder();
-			out.write("list-files".getBytes(StandardCharsets.UTF_8));
+			out.write("list-files\n".getBytes(StandardCharsets.UTF_8));
 			while (true) {
 				byte[] buffer = new byte[512];
 				int size = in.read(buffer);
@@ -119,21 +122,30 @@ public class Client {
 		try {
 			File file = new File("client" + File.separator + filename);
 			if (file.exists()) {
-				out.writeUTF("upload");
-				out.writeUTF(filename);
-				long length = file.length();
-				out.writeLong(length);
+//				long length = file.length();
+//				FileInputStream fis = new FileInputStream(file);
+				String msg = ("upload\n" + filename + "\n");
+//				out.write(msg.getBytes(StandardCharsets.UTF_8));
+//				out.flush();
+
 				FileInputStream fis = new FileInputStream(file);
 				int read = 0;
+//				Object write = new Object();
+//				ByteBuf byteBuf = (ByteBuf) write;
+//				byteBuf.readBytes(byteBuf,);
+				out.write(msg.getBytes(StandardCharsets.UTF_8));
 				byte[] buffer = new byte[256];
 				while ((read = fis.read(buffer)) != -1) {
 					out.write(buffer, 0, read);
 				}
+
+//				byteBuf.writableBytes(buffer);
 				out.flush();
-				out.writeUTF("list-files");
-				out.flush();
-				String status = in.readUTF();
-				return status;
+
+//				out.writeUTF("list-files");
+//				out.flush();
+//				String status = in.readUTF();
+				return readMsg(in);
 			} else {
 				return "File is not exists";
 			}
@@ -148,10 +160,14 @@ public class Client {
 		try {
 			File file = new File("server" + File.separator + filename);
 			if (file.exists()) {
-				out.writeUTF("download " + filename);
-//				out.writeUTF(filename);
 				long length = file.length();
-				out.writeLong(length);
+				String msg = "download\n" + filename + "\n" + length+"\n";
+				out.write(msg.getBytes(StandardCharsets.UTF_8));
+				out.flush();
+//				out.writeUTF("download " + filename);
+//				out.writeUTF(filename);
+
+
 				FileInputStream fis = new FileInputStream(file);
 				int read = 0;
 				byte[] buffer = new byte[256];
@@ -184,27 +200,7 @@ public class Client {
 				String msg = "remove " + filename;
 				out.write(msg.getBytes(StandardCharsets.UTF_8));
 				out.flush();
-//				String status = in.readUTF();
-//				System.out.println(status);
-
-				StringBuilder sbr = new StringBuilder();
-				while (true) {
-					byte[] buffer = new byte[512];
-					int size = in.read(buffer);
-					sbr.append(new String(buffer, 0, size));
-					if (sbr.toString().endsWith("end")) {
-						break;
-					}
-				}
-
-
-				String status = sbr.substring(0, sbr.toString().length() - 4);
-				out.write("list-files".getBytes(StandardCharsets.UTF_8));
-				out.flush();
-
-
-
-				return status;
+				return readMsg(in);
 
 			} else {
 				return "File is not exists";
@@ -213,6 +209,20 @@ public class Client {
 			e.printStackTrace();
 		}
 		return "Something error";
+	}
+
+	public String readMsg(DataInputStream in) throws IOException {
+		StringBuilder sbr = new StringBuilder();
+		while (true) {
+			byte[] buffer = new byte[512];
+			int size = in.read(buffer);
+			sbr.append(new String(buffer, 0, size));
+			if (sbr.toString().endsWith("end")) {
+				break;
+			}
+		}
+
+		return sbr.substring(0, sbr.toString().length() - 4);
 	}
 
 	public static void main(String[] args) throws IOException {
