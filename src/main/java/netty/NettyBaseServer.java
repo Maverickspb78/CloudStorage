@@ -9,6 +9,8 @@ import io.netty.channel.socket.SocketChannel;
 import io.netty.channel.socket.nio.NioServerSocketChannel;
 import io.netty.handler.codec.string.StringDecoder;
 import io.netty.handler.codec.string.StringEncoder;
+import io.netty.handler.logging.LogLevel;
+import io.netty.handler.logging.LoggingHandler;
 
 public class NettyBaseServer {
 	public NettyBaseServer() {
@@ -22,9 +24,11 @@ public class NettyBaseServer {
 						@Override
 						public void initChannel(SocketChannel ch) throws Exception {
 							ch.pipeline().addLast(
+									new LoggingHandler(LogLevel.INFO),
 									new StringDecoder(), // in-1
 									new StringEncoder(), // out-1
 									new FileHandler() // in-2
+
 							);
 						}
 					});
