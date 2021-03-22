@@ -1,8 +1,3 @@
-package client;
-
-
-import io.netty.buffer.ByteBuf;
-
 import javax.swing.*;
 import java.awt.*;
 import java.io.*;
@@ -29,7 +24,7 @@ public class Client {
 		runClient();
 	}
 
-	private void runClient() {
+	private void runClient() throws IOException {
 		JFrame frame = new JFrame("Cloud Storage");
 		frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		frame.setSize(new Dimension(width,height));
@@ -40,7 +35,6 @@ public class Client {
 
 
 		JList<String> list = new JList<>();
-//		DefaultListModel<String> myModel = new DefaultListModel<>();
 		list.setModel(myModel);
 
 		JButton uploadButton = new JButton("Upload");
@@ -69,18 +63,29 @@ public class Client {
 		frame.setVisible(true);
 
 		uploadButton.addActionListener(a -> {
-			System.out.println(sendFile(ta.getText()));
-			fillList(myModel);
+			try {
+				System.out.println(sendFile(ta.getText()));
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
 		});
 		downloadButton.addActionListener(a -> {
 			System.out.println(downloadFile(ta.getText()));
 		});
 		removeButton.addActionListener(a -> {
 			System.out.println(remove(ta.getText()));
-			fillList(myModel);
+			try {
+				fillList(myModel);
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
 		});
 		refreshButton.addActionListener(a -> {
-			fillList(myModel);
+			try {
+				fillList(myModel);
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
 		});
 		list.addListSelectionListener(a ->{
 			ta.setText(list.getSelectedValue());
@@ -88,7 +93,7 @@ public class Client {
 
 	}
 
-	private void fillList(DefaultListModel<String> myModel) {
+	private void fillList(DefaultListModel<String> myModel) throws IOException {
 		List<String> list =  downloadFileList();
 		myModel.clear();
 		for (String filename : list) {
@@ -96,8 +101,9 @@ public class Client {
 		}
 	}
 
-	private List<String> downloadFileList() {
+	private List<String> downloadFileList() throws IOException {
 		List<String> list = new ArrayList<String>();
+
 		try {
 			StringBuilder sb = new StringBuilder();
 			out.write("list-files\n".getBytes(StandardCharsets.UTF_8));
@@ -118,34 +124,23 @@ public class Client {
 		return list;
 	}
 
-	private String sendFile(String filename) {
+	private String sendFile(String filename) throws IOException {
 		try {
 			File file = new File("client" + File.separator + filename);
 			if (file.exists()) {
-//				long length = file.length();
-//				FileInputStream fis = new FileInputStream(file);
 				String msg = ("upload\n" + filename + "\n");
-//				out.write(msg.getBytes(StandardCharsets.UTF_8));
-//				out.flush();
-
 				FileInputStream fis = new FileInputStream(file);
-				int read = 0;
-//				Object write = new Object();
-//				ByteBuf byteBuf = (ByteBuf) write;
-//				byteBuf.readBytes(byteBuf,);
-				out.write(msg.getBytes(StandardCharsets.UTF_8));
-				byte[] buffer = new byte[256];
-				while ((read = fis.read(buffer)) != -1) {
-					out.write(buffer, 0, read);
+				BufferedInputStream inputStream = new BufferedInputStream(fis, 512);
+				long size = file.length();
+				System.out.println(size);
+				out.write(msg.getBytes());
+				System.out.println(inputStream.available());
+				while ((inputStream.available() > 0)) {
+					out.write(inputStream.readAllBytes());
 				}
-
-//				byteBuf.writableBytes(buffer);
 				out.flush();
-
-//				out.writeUTF("list-files");
-//				out.flush();
-//				String status = in.readUTF();
 				return readMsg(in);
+
 			} else {
 				return "File is not exists";
 			}
@@ -158,31 +153,26 @@ public class Client {
 
 	private String downloadFile(String filename) {
 		try {
-			File file = new File("server" + File.separator + filename);
-			if (file.exists()) {
-				long length = file.length();
-				String msg = "download\n" + filename + "\n" + length+"\n";
-				out.write(msg.getBytes(StandardCharsets.UTF_8));
+			File file = new File("client" + File.separator + filename);
+			if (!file.exists()) {
+				file.createNewFile();
+
+				out.write(("download\n" + filename+"\n").getBytes(StandardCharsets.UTF_8));
 				out.flush();
-//				out.writeUTF("download " + filename);
-//				out.writeUTF(filename);
 
-
-				FileInputStream fis = new FileInputStream(file);
-				int read = 0;
-				byte[] buffer = new byte[256];
-				while ((read = fis.read(buffer)) != -1) {
-					out.write(buffer, 0, read);
+				FileOutputStream fos = new FileOutputStream("client" + File.separator + filename);
+				while (true) {
+					byte[] buffer = new byte[512];
+					int size = in.read(buffer);
+					fos.write(buffer,0,size);
+					if (in.available()<1) {
+						System.out.println("exit");
+						break;
+					}
 				}
-				out.flush();
+				fos.close();
 
-				byte [] b = in.readAllBytes();
-				String status = "";
-				for(byte a : b)
-					status+=a;
-				System.out.println(status);
-//				String status = in.readUTF();
-				return status;
+				return readMsg(in);
 			} else {
 				return "File is not exists";
 			}
@@ -221,6 +211,7 @@ public class Client {
 				break;
 			}
 		}
+		out.flush();
 
 		return sbr.substring(0, sbr.toString().length() - 4);
 	}

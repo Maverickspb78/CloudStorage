@@ -6,11 +6,14 @@
         <sourceOutputDir name="target/generated-sources/annotations" />
         <sourceTestOutputDir name="target/generated-test-sources/test-annotations" />
         <outputRelativeToContentRoot value="true" />
-        <module name="CloudStorage" />
+        <module name="ClientApp" />
+        <module name="ServerApp" />
       </profile>
     </annotationProcessing>
     <bytecodeTargetLevel>
+      <module name="ClientApp" target="14" />
       <module name="CloudStorage" target="14" />
+      <module name="ServerApp" target="14" />
     </bytecodeTargetLevel>
   </component>
 </project>

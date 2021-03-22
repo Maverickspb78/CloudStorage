@@ -1,10 +1,11 @@
-package netty;
-
 
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.SimpleChannelInboundHandler;
 
+
+
 import java.io.*;
+
 import java.nio.charset.StandardCharsets;
 
 public class FileHandler extends SimpleChannelInboundHandler<String> {
@@ -22,9 +23,7 @@ public class FileHandler extends SimpleChannelInboundHandler<String> {
 		String filename = "";
 
 		System.out.println("Message:\n" + msg);
-//		System.out.println(msg.startsWith("list-files"));
 		String command = msg.split("\n")[0];
-//		System.out.println("command replace: " + command);
 		if (command.equals("list-files")) {
 			File file = new File("server");
 			File[] files = file.listFiles();
@@ -38,20 +37,14 @@ public class FileHandler extends SimpleChannelInboundHandler<String> {
 			filename = msg.split(" ")[1];
 			remove(ctx, filename);
 		} else if (command.startsWith("upload")) {
-
-			System.out.println("upload command: " + command);
 			filename = msg.split("\n")[1];
 			int length = command.length()+ filename.length() + 2;
-			System.out.println("filename: " + filename);
-
+			System.out.println(length);
 			upload(ctx, msg, length);
 
 		} else if (command.startsWith("download")) {
-//			System.out.println("download command: " + command);
-//			filename = command.split(" ")[1];
-//			System.out.println("download command: " + filename);
-//			ctx.write(("download" + "end").getBytes());
-//			download(ctx, filename);
+			filename = msg.split("\n")[1];
+			download(ctx, filename);
 		} else {
 			System.out.println("Chanel closed");
 			ctx.channel().closeFuture();
@@ -87,6 +80,7 @@ public class FileHandler extends SimpleChannelInboundHandler<String> {
 		try {
 
 			File file = new File("server" + File.separator + filename);
+
 			if (!file.exists()) {
 				file.createNewFile();
 				BufferedWriter bufferedWriter = new BufferedWriter(new FileWriter(file));
@@ -101,11 +95,39 @@ public class FileHandler extends SimpleChannelInboundHandler<String> {
 		}
 	}
 
+	public void download(ChannelHandlerContext ctx, String filename) throws IOException {
+		try {
+			File file = new File("server" + File.separator + filename);
+			if (file.exists()) {
+				BufferedReader bufferedReader = new BufferedReader(new FileReader(file));
+
+				String m ="";
+				while (bufferedReader.ready()) {
+					m = m + bufferedReader.readLine() + "\n";
+				}
+				System.out.println(m);
+				ctx.writeAndFlush(m);
+				ctx.writeAndFlush("File " + filename + " coped from server\nend");
+				bufferedReader.close();
+
+			}
+			else {
+				ctx.writeAndFlush("File " + filename + " already exists\nend");
+			}
+		} catch (Exception e) {
+			ctx.writeAndFlush("ERROR\n");
+		}
+
+
+	}
+
 	@Override
 	public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) {
 		//cause.printStackTrace();
 		ctx.close();
 	}
+
+
 }
 
 

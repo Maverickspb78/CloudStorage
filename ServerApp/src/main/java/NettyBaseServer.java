@@ -1,5 +1,3 @@
-package netty;
-
 import io.netty.bootstrap.ServerBootstrap;
 import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelInitializer;
@@ -7,6 +5,10 @@ import io.netty.channel.EventLoopGroup;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.SocketChannel;
 import io.netty.channel.socket.nio.NioServerSocketChannel;
+import io.netty.handler.codec.serialization.ClassResolver;
+import io.netty.handler.codec.serialization.ClassResolvers;
+import io.netty.handler.codec.serialization.ObjectDecoder;
+import io.netty.handler.codec.serialization.ObjectEncoder;
 import io.netty.handler.codec.string.StringDecoder;
 import io.netty.handler.codec.string.StringEncoder;
 import io.netty.handler.logging.LogLevel;
@@ -23,13 +25,13 @@ public class NettyBaseServer {
 					.childHandler(new ChannelInitializer<SocketChannel>() {
 						@Override
 						public void initChannel(SocketChannel ch) throws Exception {
-							ch.pipeline().addLast(
-									new LoggingHandler(LogLevel.INFO),
-									new StringDecoder(), // in-1
-									new StringEncoder(), // out-1
-									new FileHandler() // in-2
-
-							);
+							ch.pipeline().addLast("Logger", new LoggingHandler(LogLevel.INFO));
+							ch.pipeline().addLast("StringDecoder", new StringDecoder()); // in-1
+//							ch.pipeline().addLast("ObjectEncoder", new ObjectEncoder());
+//							ch.pipeline().addLast("ObjectDecoder", new ObjectDecoder(ClassResolvers.cacheDisabled(null)));
+							ch.pipeline().addLast("StringEncoder", new StringEncoder()); // out-1
+							ch.pipeline().addLast("FileHandler", new FileHandler()); // in-2
+//							ch.pipeline().addLast("MoveHandler",	new MoveHandler());
 						}
 					});
 			ChannelFuture future = bootstrap.bind(1234).sync();
