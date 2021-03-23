@@ -3,6 +3,8 @@ import java.awt.*;
 import java.io.*;
 import java.net.Socket;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -15,6 +17,11 @@ public class Client {
 	private int height = 300;
 	private int width = 400;
 	private DefaultListModel<String> myModel = new DefaultListModel<>();
+	private DefaultListModel<String> myModel2 = new DefaultListModel<>();
+	private String filNameServer = "";
+	private String filNameClient = "";
+	Path serverPath = Paths.get("server");
+	Path clientPath = Paths.get("client");
 
 
 	public Client() throws IOException {
@@ -30,12 +37,18 @@ public class Client {
 		frame.setSize(new Dimension(width,height));
 		frame.setLocationRelativeTo(null);
 		JPanel panel = new JPanel();
-		JTextArea ta = new JTextArea();
-		Icon iconRefresh = new ImageIcon("icon\\refresh2.png");
+		JPanel panel2 = new JPanel();
+		JPanel panalTa = new JPanel();
+		panalTa.setSize(200,300);
+		JTextArea taS = new JTextArea();
+		JTextArea taC = new JTextArea();
+		Icon iconRefresh = new ImageIcon("ClientApp/src/main/resources/icon/refresh2.png");
 
 
 		JList<String> list = new JList<>();
+		JList<String> list2 = new JList<>();
 		list.setModel(myModel);
+		list2.setModel(myModel2);
 
 		JButton uploadButton = new JButton("Upload");
 		uploadButton.setSize(20,40);
@@ -50,50 +63,81 @@ public class Client {
 		refreshButton.setSize(20,20);
 
 
-		frame.getContentPane().add(BorderLayout.NORTH, ta);
-		frame.getContentPane().add(BorderLayout.CENTER, new JScrollPane(list));
+		frame.getContentPane().add(BorderLayout.NORTH, panalTa);
+		frame.getContentPane().add(BorderLayout.CENTER, panel2);
 		frame.getContentPane().add(BorderLayout.SOUTH, panel);
 		panel.add(uploadButton);
 		panel.add(downloadButton);
 		panel.add(removeButton);
 		panel.add(refreshButton);
-
-		fillList(myModel);
+		panel2.add(new JScrollPane(list));
+		panel2.add(new JScrollPane(list2));
+		panalTa.add(BorderLayout.WEST, taS);
+		panalTa.add(BorderLayout.EAST, taC);
+		fillList(myModel, serverPath);
+		clientList(myModel2);
 
 		frame.setVisible(true);
 
 		uploadButton.addActionListener(a -> {
-			try {
-				System.out.println(sendFile(ta.getText()));
-			} catch (IOException e) {
+			System.out.println(sendFile(taC.getText()));
+			try	{
+				fillList(myModel, serverPath);
+				clientList(myModel2);
+			} catch (IOException e){
+				e.printStackTrace();
+			}
+
+		});
+		downloadButton.addActionListener(a -> {
+			System.out.println(downloadFile(taS.getText()));
+			try	{
+				fillList(myModel, serverPath);
+				clientList(myModel2);
+			} catch (IOException e){
 				e.printStackTrace();
 			}
 		});
-		downloadButton.addActionListener(a -> {
-			System.out.println(downloadFile(ta.getText()));
-		});
 		removeButton.addActionListener(a -> {
-			System.out.println(remove(ta.getText()));
+			System.out.println(remove(taS.getText()));
 			try {
-				fillList(myModel);
+				fillList(myModel, serverPath);
+				clientList(myModel2);;
 			} catch (IOException e) {
 				e.printStackTrace();
 			}
 		});
 		refreshButton.addActionListener(a -> {
 			try {
-				fillList(myModel);
+				fillList(myModel, serverPath);
+				clientList(myModel2);;
 			} catch (IOException e) {
 				e.printStackTrace();
 			}
 		});
 		list.addListSelectionListener(a ->{
-			ta.setText(list.getSelectedValue());
+			taS.setText(list.getSelectedValue());
+		});
+		list2.addListSelectionListener(a ->{
+			taC.setText(list2.getSelectedValue());
 		});
 
 	}
 
-	private void fillList(DefaultListModel<String> myModel) throws IOException {
+	private void clientList(DefaultListModel<String> myModel2){
+		File file = new File("client");
+		String[] files = file.list();
+		myModel2.clear();
+		if (files != null) {
+			for (String fil:files){
+				myModel2.addElement(fil);
+			}
+		}
+
+
+	}
+
+	private void fillList(DefaultListModel<String> myModel, Path path) throws IOException {
 		List<String> list =  downloadFileList();
 		myModel.clear();
 		for (String filename : list) {
@@ -115,6 +159,8 @@ public class Client {
 					break;
 				}
 			}
+			out.flush();
+
 			String fileString = sb.substring(0, sb.toString().length() - 4);
 			list = Arrays.asList(fileString.split("\n"));
 		} catch (IOException e) {
@@ -124,7 +170,7 @@ public class Client {
 		return list;
 	}
 
-	private String sendFile(String filename) throws IOException {
+	private String sendFile(String filename) {
 		try {
 			File file = new File("client" + File.separator + filename);
 			if (file.exists()) {
@@ -211,7 +257,7 @@ public class Client {
 				break;
 			}
 		}
-		out.flush();
+
 
 		return sbr.substring(0, sbr.toString().length() - 4);
 	}
