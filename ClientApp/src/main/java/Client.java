@@ -1,10 +1,12 @@
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
+import java.awt.event.MouseListener;
 import java.io.*;
 import java.net.Socket;
 import java.nio.charset.StandardCharsets;
-import java.nio.file.Path;
-import java.nio.file.Paths;
+import java.nio.file.*;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -20,8 +22,10 @@ public class Client {
 	private DefaultListModel<String> myModel2 = new DefaultListModel<>();
 	private String filNameServer = "";
 	private String filNameClient = "";
-	Path serverPath = Paths.get("server");
-	Path clientPath = Paths.get("client");
+	private Path serverPath = Paths.get("server");
+	private Path clientPath = Paths.get("c:\\");
+
+
 
 
 	public Client() throws IOException {
@@ -37,19 +41,21 @@ public class Client {
 		frame.setSize(new Dimension(width,height));
 		frame.setLocationRelativeTo(null);
 		JPanel panel = new JPanel();
-		JPanel panel2 = new JPanel();
-		JPanel panalTa = new JPanel();
-		panalTa.setSize(200,300);
+
+		JSplitPane panel2 = new JSplitPane();
+		JSplitPane panalTa = new JSplitPane();
 		JTextArea taS = new JTextArea();
 		JTextArea taC = new JTextArea();
+		taS.setSize(150,10);
+		taC.setSize(150,10);
 		Icon iconRefresh = new ImageIcon("ClientApp/src/main/resources/icon/refresh2.png");
+
 
 
 		JList<String> list = new JList<>();
 		JList<String> list2 = new JList<>();
 		list.setModel(myModel);
 		list2.setModel(myModel2);
-
 		JButton uploadButton = new JButton("Upload");
 		uploadButton.setSize(20,40);
 
@@ -70,20 +76,26 @@ public class Client {
 		panel.add(downloadButton);
 		panel.add(removeButton);
 		panel.add(refreshButton);
-		panel2.add(new JScrollPane(list));
-		panel2.add(new JScrollPane(list2));
-		panalTa.add(BorderLayout.WEST, taS);
-		panalTa.add(BorderLayout.EAST, taC);
+		panel2.setLeftComponent(new JScrollPane(list));
+		panel2.setRightComponent(new JScrollPane(list2));
+		panel2.setResizeWeight(0.5);
+		panalTa.setLeftComponent(taS);
+		panalTa.setRightComponent(taC);
+		panalTa.setResizeWeight(0.54);
+		panalTa.setSize(99,10);
 		fillList(myModel, serverPath);
-		clientList(myModel2);
+		clientList(myModel2, clientPath, "out");
 
 		frame.setVisible(true);
+
+
+
 
 		uploadButton.addActionListener(a -> {
 			System.out.println(sendFile(taC.getText()));
 			try	{
 				fillList(myModel, serverPath);
-				clientList(myModel2);
+				clientList(myModel2, clientPath);
 			} catch (IOException e){
 				e.printStackTrace();
 			}
@@ -93,53 +105,111 @@ public class Client {
 			System.out.println(downloadFile(taS.getText()));
 			try	{
 				fillList(myModel, serverPath);
-				clientList(myModel2);
+				clientList(myModel2, clientPath);
 			} catch (IOException e){
 				e.printStackTrace();
 			}
 		});
 		removeButton.addActionListener(a -> {
-			System.out.println(remove(taS.getText()));
-			try {
-				fillList(myModel, serverPath);
-				clientList(myModel2);;
-			} catch (IOException e) {
-				e.printStackTrace();
+			if(taC.getText().equals("")) {
+				System.out.println(remove(taS.getText(), "server"));
+				try {
+					fillList(myModel, serverPath);
+				} catch (IOException e) {
+					e.printStackTrace();
+				}
+			} else {
+				System.out.println(remove(taC.getText(), "client"));
+				clientList(myModel2, clientPath);
 			}
 		});
 		refreshButton.addActionListener(a -> {
 			try {
 				fillList(myModel, serverPath);
-				clientList(myModel2);;
+				clientList(myModel2, clientPath);;
 			} catch (IOException e) {
 				e.printStackTrace();
 			}
 		});
 		list.addListSelectionListener(a ->{
-			taS.setText(list.getSelectedValue());
+				taC.setText("");
+				taS.setText(list.getSelectedValue());
+
 		});
 		list2.addListSelectionListener(a ->{
+			taS.setText("");
 			taC.setText(list2.getSelectedValue());
 		});
 
+		//addListSelectionListener to the server window
+		list.addListSelectionListener(a ->{
+			list.addMouseListener(new MouseAdapter() {
+				@Override
+				public void mouseClicked(MouseEvent e) {
+					super.mouseClicked(e);
+				}
+			});
+		});
+		//addListSelectionListener to the client window
+
+			list2.addMouseListener(new MouseAdapter() {
+				@Override
+				public void mouseClicked(MouseEvent e) {
+					if (e.getClickCount() == 2) {
+						if ((clientPath.toString().length()<4)&&(taC.getText().contains(":\\"))){
+							clientPath=Path.of(taC.getText());
+							clientList(myModel2, clientPath);
+						}
+						if (Files.isDirectory(Paths.get(clientPath.toString() + File.separator + taC.getText()))) {
+							if ((taC.getText().equals("...") || taS.getText().equals("..."))){
+								if (clientPath.toAbsolutePath().normalize().getParent()!=null) {
+									clientPath = clientPath.normalize().toAbsolutePath().getParent();
+									clientList(myModel2, clientPath);
+								} else {
+									clientPath=Path.of(taC.getText());
+									clientList(myModel2, clientPath, "out");
+								}
+							}else {
+								clientPath = Path.of(clientPath + File.separator + taC.getText());
+								clientList(myModel2, clientPath);
+							}
+						}
+					}
+
+				}
+
+			});
 	}
 
-	private void clientList(DefaultListModel<String> myModel2){
-		File file = new File("client");
+	private void clientList(DefaultListModel<String> myModel2, Path clientPath){
+		File file = new File(clientPath.toString());
 		String[] files = file.list();
 		myModel2.clear();
+		myModel2.addElement("...");
 		if (files != null) {
 			for (String fil:files){
 				myModel2.addElement(fil);
 			}
 		}
 
+	}
 
+	private void clientList(DefaultListModel<String> myModel2, Path clientPath, String out){
+		String arg = FileSystems.getDefault().getRootDirectories().toString();
+		arg = arg.replace("[", "");
+		arg = arg.replace("]", "");
+		arg = arg.replace(" ", "");
+		String[] files = arg.split(",");
+		myModel2.clear();
+			for (String fil:files){
+				myModel2.addElement(fil);
+			}
 	}
 
 	private void fillList(DefaultListModel<String> myModel, Path path) throws IOException {
 		List<String> list =  downloadFileList();
 		myModel.clear();
+		myModel.addElement("...");
 		for (String filename : list) {
 			myModel.addElement(filename);
 		}
@@ -172,15 +242,15 @@ public class Client {
 
 	private String sendFile(String filename) {
 		try {
-			File file = new File("client" + File.separator + filename);
+			File file = new File(clientPath + File.separator + filename);
 			if (file.exists()) {
 				String msg = ("upload\n" + filename + "\n");
 				FileInputStream fis = new FileInputStream(file);
 				BufferedInputStream inputStream = new BufferedInputStream(fis, 512);
 				long size = file.length();
-				System.out.println(size);
+//				System.out.println(size);
 				out.write(msg.getBytes());
-				System.out.println(inputStream.available());
+//				System.out.println(inputStream.available());
 				while ((inputStream.available() > 0)) {
 					out.write(inputStream.readAllBytes());
 				}
@@ -199,14 +269,14 @@ public class Client {
 
 	private String downloadFile(String filename) {
 		try {
-			File file = new File("client" + File.separator + filename);
+			File file = new File(clientPath + File.separator + filename);
 			if (!file.exists()) {
 				file.createNewFile();
 
 				out.write(("download\n" + filename+"\n").getBytes(StandardCharsets.UTF_8));
 				out.flush();
 
-				FileOutputStream fos = new FileOutputStream("client" + File.separator + filename);
+				FileOutputStream fos = new FileOutputStream(clientPath + File.separator + filename);
 				while (true) {
 					byte[] buffer = new byte[512];
 					int size = in.read(buffer);
@@ -228,18 +298,31 @@ public class Client {
 		return "Something error";
 	}
 
-	private String remove(String filename){
+	private String remove(String filename, String position){
 		try {
-
-			File file = new File("server" + File.separator + filename);
+			if (position.equals("server")){
+			File file = new File(serverPath + File.separator + filename);
 			if (file.exists()) {
 				String msg = "remove " + filename;
+				System.out.println(serverPath);
 				out.write(msg.getBytes(StandardCharsets.UTF_8));
 				out.flush();
 				return readMsg(in);
 
 			} else {
 				return "File is not exists";
+			}
+			}
+			else {
+				File file = new File(clientPath + File.separator + filename);
+				if (file.exists()) {
+					file.delete();
+					System.out.println(clientPath);
+					System.out.println(file.getName());
+					return "File " + filename + " deleted from " + clientPath.toString();
+				} else {
+					return "File is not exists";
+				}
 			}
 		} catch (IOException e) {
 			e.printStackTrace();

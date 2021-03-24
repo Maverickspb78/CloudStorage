@@ -7,6 +7,7 @@ import io.netty.channel.SimpleChannelInboundHandler;
 import java.io.*;
 
 import java.nio.charset.StandardCharsets;
+import java.nio.file.StandardCopyOption;
 
 public class FileHandler extends SimpleChannelInboundHandler<String> {
 
@@ -84,6 +85,8 @@ public class FileHandler extends SimpleChannelInboundHandler<String> {
 			if (!file.exists()) {
 				file.createNewFile();
 				BufferedWriter bufferedWriter = new BufferedWriter(new FileWriter(file));
+//				msg = ctx.channel().read().alloc().buffer().toString();
+//				bufferedWriter.write(msg);
 				bufferedWriter.write(msg.substring(length));
 				bufferedWriter.close();
 				ctx.writeAndFlush("File " + filename + " coped from server\nend");
