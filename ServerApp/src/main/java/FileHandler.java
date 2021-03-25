@@ -7,6 +7,9 @@ import io.netty.channel.SimpleChannelInboundHandler;
 import java.io.*;
 
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 
 public class FileHandler extends SimpleChannelInboundHandler<String> {
@@ -22,18 +25,45 @@ public class FileHandler extends SimpleChannelInboundHandler<String> {
 
 
 		String filename = "";
-
 		System.out.println("Message:\n" + msg);
 		String command = msg.split("\n")[0];
-		if (command.equals("list-files")) {
-			File file = new File("server");
-			File[] files = file.listFiles();
-			StringBuffer sb = new StringBuffer();
-			for (File f : files) {
-				sb.append(f.getName() + "\n");
+		if (command.startsWith("list-files")) {
+			Path serverPath = Path.of(msg.split("\n")[1]);
+			File file = new File(serverPath.toString());
+			if (Files.isDirectory(Paths.get(serverPath.toString()))) {
+				if (file.getName().equals("...")) {
+					file = new File(file.getParent());
+				}
+				File[] files = file.listFiles();
+				StringBuffer sb = new StringBuffer();
+				for (File f : files) {
+					sb.append(f.getName() + "\n");
+				}
+				sb.append("end");
+				ctx.writeAndFlush(sb.toString());
 			}
-			sb.append("end");
-			ctx.writeAndFlush(sb.toString());
+			else {
+				String[] p = serverPath.toString().split("\\\\");
+				if (p.length > 1) {
+					String pah = "";
+					for (int i = 0; i < p.length - 1; i++) {
+						pah += p[i] + "\\";
+					}
+
+					serverPath = Paths.get(pah);
+					file = new File(serverPath.toString());
+					File[] files = file.listFiles();
+					StringBuffer sb = new StringBuffer();
+					sb.append("false\n");
+					for (File f : files) {
+						sb.append(f.getName() + "\n");
+					}
+					sb.append("end");
+					ctx.writeAndFlush(sb.toString());
+				}
+			}
+
+
 		} else if (command.startsWith("remove")) {
 			filename = msg.split(" ")[1];
 			remove(ctx, filename);

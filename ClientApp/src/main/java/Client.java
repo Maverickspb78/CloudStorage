@@ -142,14 +142,32 @@ public class Client {
 		});
 
 		//addListSelectionListener to the server window
-		list.addListSelectionListener(a ->{
-			list.addMouseListener(new MouseAdapter() {
+		list.addMouseListener(new MouseAdapter() {
 				@Override
 				public void mouseClicked(MouseEvent e) {
-					super.mouseClicked(e);
+					if (e.getClickCount() == 2) {
+						if (taS.getText().equals("...")){
+							String[] p = serverPath.toString().split("\\\\");
+							if (p.length > 1) {
+								String pah = "";
+								for (int i = 0; i < p.length - 1; i++) {
+									pah += p[i] + "\\";
+								}
+								serverPath = Paths.get(pah);
+							}
+						} else {
+							serverPath = Paths.get(serverPath + File.separator + taS.getText());
+						}
+						try {
+							fillList(myModel, serverPath);
+						} catch (IOException ioException) {
+							ioException.printStackTrace();
+						}
+
+					}
 				}
 			});
-		});
+
 		//addListSelectionListener to the client window
 
 			list2.addMouseListener(new MouseAdapter() {
@@ -207,7 +225,7 @@ public class Client {
 	}
 
 	private void fillList(DefaultListModel<String> myModel, Path path) throws IOException {
-		List<String> list =  downloadFileList();
+		List<String> list =  downloadFileList(serverPath);
 		myModel.clear();
 		myModel.addElement("...");
 		for (String filename : list) {
@@ -215,12 +233,12 @@ public class Client {
 		}
 	}
 
-	private List<String> downloadFileList() throws IOException {
+	private List<String> downloadFileList(Path path) throws IOException {
 		List<String> list = new ArrayList<String>();
 
 		try {
 			StringBuilder sb = new StringBuilder();
-			out.write("list-files\n".getBytes(StandardCharsets.UTF_8));
+			out.write(("list-files\n" + serverPath + "\n").getBytes(StandardCharsets.UTF_8));
 			while (true) {
 				byte[] buffer = new byte[512];
 				int size = in.read(buffer);
@@ -229,10 +247,23 @@ public class Client {
 					break;
 				}
 			}
-			out.flush();
+			if (sb.toString().split("\n")[0].equals("false")) {
+				String[] p = serverPath.toString().split("\\\\");
+				if (p.length > 1) {
+					String pah = "";
+					for (int i = 0; i < p.length - 1; i++) {
+						pah += p[i] + "\\";
+					}
 
-			String fileString = sb.substring(0, sb.toString().length() - 4);
-			list = Arrays.asList(fileString.split("\n"));
+					serverPath = Paths.get(pah);
+					sb.delete(0, sb.toString().split("\n")[0].length() +1);
+				}
+				}
+				out.flush();
+
+				String fileString = sb.substring(0, sb.toString().length() - 4);
+				list = Arrays.asList(fileString.split("\n"));
+
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
@@ -248,9 +279,7 @@ public class Client {
 				FileInputStream fis = new FileInputStream(file);
 				BufferedInputStream inputStream = new BufferedInputStream(fis, 512);
 				long size = file.length();
-//				System.out.println(size);
 				out.write(msg.getBytes());
-//				System.out.println(inputStream.available());
 				while ((inputStream.available() > 0)) {
 					out.write(inputStream.readAllBytes());
 				}
@@ -282,7 +311,6 @@ public class Client {
 					int size = in.read(buffer);
 					fos.write(buffer,0,size);
 					if (in.available()<1) {
-						System.out.println("exit");
 						break;
 					}
 				}
@@ -304,7 +332,6 @@ public class Client {
 			File file = new File(serverPath + File.separator + filename);
 			if (file.exists()) {
 				String msg = "remove " + filename;
-				System.out.println(serverPath);
 				out.write(msg.getBytes(StandardCharsets.UTF_8));
 				out.flush();
 				return readMsg(in);
