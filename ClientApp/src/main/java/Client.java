@@ -7,6 +7,9 @@ import java.io.*;
 import java.net.Socket;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.*;
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -32,7 +35,67 @@ public class Client {
 		socket = new Socket("localhost", 1234);
 		in = new DataInputStream(socket.getInputStream());
 		out = new DataOutputStream(socket.getOutputStream());
-		runClient();
+		connect();
+		if (auth()) {
+			runClient();
+		}
+	}
+	public static void connect() {
+		Connection conn = null;
+		try {
+			Class.forName("org.sqlite.JDBC");
+			String url = "jdbc:sqlite:C:\\study\\CloudStorage\\SCloudDB";
+			conn = DriverManager.getConnection(url);
+			System.out.println("Connection to SQLite has been established.");
+		} catch (SQLException | ClassNotFoundException e) {
+			System.out.println(e.getMessage());
+		} finally {
+			try {
+				if (conn != null) {
+					conn.close();
+				}
+			} catch (SQLException ex) {
+				System.out.println(ex.getMessage());
+			}
+		}
+	}
+
+	public boolean auth() {
+		JFrame frameAuth = new JFrame("authorization");
+		frameAuth.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+		frameAuth.setSize(new Dimension(400,110));
+		frameAuth.setLocationRelativeTo(null);
+		JSplitPane panelAuth = new JSplitPane();
+		JSplitPane panelAuthLabel = new JSplitPane();
+		Label login = new Label("login");
+		Label pass = new Label("password");
+		login.setMaximumSize(new Dimension(150,10));
+		pass.setMaximumSize(new Dimension(150,10));
+		JButton buttonAuth = new JButton("authorization");
+		JButton buttonReg = new JButton("registration");
+		JPasswordField passwordField = new JPasswordField();
+//		passwordField.setSize(150, 10);
+		JTextArea taAuth = new JTextArea();
+//		taAuth.setSize(150, 10);
+		JPanel panelButton = new JPanel();
+		panelButton.add(buttonAuth);
+		panelButton.add(buttonReg);
+
+
+		panelAuth.setLeftComponent(taAuth);
+		panelAuth.setRightComponent(passwordField);
+		panelAuth.setResizeWeight(0.5);
+		panelAuthLabel.setLeftComponent(login);
+		panelAuthLabel.setRightComponent(pass);
+		panelAuthLabel.setResizeWeight(0.55);
+		frameAuth.getContentPane().add(BorderLayout.NORTH, panelAuth);
+		frameAuth.getContentPane().add(BorderLayout.CENTER, panelAuthLabel);
+		frameAuth.getContentPane().add(BorderLayout.SOUTH, panelButton);
+
+
+
+		frameAuth.setVisible(true);
+		return false;
 	}
 
 	private void runClient() throws IOException {
