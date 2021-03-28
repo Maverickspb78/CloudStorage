@@ -2,17 +2,14 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
-import java.awt.event.MouseListener;
 import java.io.*;
 import java.net.Socket;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.*;
-import java.sql.Connection;
-import java.sql.DriverManager;
-import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicInteger;
 
 public class Client {
 	private final Socket socket;
@@ -29,38 +26,26 @@ public class Client {
 	private Path clientPath = Paths.get("c:\\");
 
 
+	public Path getServerPath() {
+		return serverPath;
+	}
 
+	public void setServerPath(Path serverPath) {
+		this.serverPath = serverPath;
+	}
 
 	public Client() throws IOException {
 		socket = new Socket("localhost", 1234);
 		in = new DataInputStream(socket.getInputStream());
 		out = new DataOutputStream(socket.getOutputStream());
-		connect();
-		if (auth()) {
-			runClient();
-		}
-	}
-	public static void connect() {
-		Connection conn = null;
-		try {
-			Class.forName("org.sqlite.JDBC");
-			String url = "jdbc:sqlite:C:\\study\\CloudStorage\\SCloudDB";
-			conn = DriverManager.getConnection(url);
-			System.out.println("Connection to SQLite has been established.");
-		} catch (SQLException | ClassNotFoundException e) {
-			System.out.println(e.getMessage());
-		} finally {
-			try {
-				if (conn != null) {
-					conn.close();
-				}
-			} catch (SQLException ex) {
-				System.out.println(ex.getMessage());
-			}
-		}
+
+		auth();
 	}
 
-	public boolean auth() {
+
+	public void auth() {
+		AtomicInteger b = new AtomicInteger();
+
 		JFrame frameAuth = new JFrame("authorization");
 		frameAuth.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		frameAuth.setSize(new Dimension(400,110));
@@ -74,9 +59,7 @@ public class Client {
 		JButton buttonAuth = new JButton("authorization");
 		JButton buttonReg = new JButton("registration");
 		JPasswordField passwordField = new JPasswordField();
-//		passwordField.setSize(150, 10);
 		JTextArea taAuth = new JTextArea();
-//		taAuth.setSize(150, 10);
 		JPanel panelButton = new JPanel();
 		panelButton.add(buttonAuth);
 		panelButton.add(buttonReg);
@@ -92,10 +75,63 @@ public class Client {
 		frameAuth.getContentPane().add(BorderLayout.CENTER, panelAuthLabel);
 		frameAuth.getContentPane().add(BorderLayout.SOUTH, panelButton);
 
+		buttonAuth.addActionListener(a->{
+			try {
+				if (authorizatior(taAuth,passwordField)==1){
+					System.out.println("if buttonAuth");
+						runClient();
+						frameAuth.setVisible(false);
+				}
+				else {
+					taAuth.setText("Wrong login or password");
+					passwordField.setText("");
+				}
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+
+
+		});
+
+		buttonReg.addActionListener(a->{
+			try {
+				if (registr(taAuth,passwordField)==1){
+					System.out.println("if buttonReg");
+					runClient();
+					frameAuth.setVisible(false);
+				}
+				else {
+					taAuth.setText("this login already used");
+					passwordField.setText("");
+				}
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+
+		});
+
 
 
 		frameAuth.setVisible(true);
-		return false;
+
+	}
+
+	public int authorizatior(JTextArea taAuth, JPasswordField passwordField) throws IOException {
+		String msg = "auth\n" + taAuth.getText() + "\n" + passwordField.getText() + "\n";
+		out.write(msg.getBytes(StandardCharsets.UTF_8));
+		System.out.println("waiting in");
+		int b = Integer.parseInt(readMsg(in));
+		System.out.println(b);
+		return b;
+	}
+
+	public int registr (JTextArea taAuth, JPasswordField passwordField) throws IOException {
+		String msg = "reg\n" + taAuth.getText()+"\n" + passwordField.getText()+"\n";
+		out.write(msg.getBytes(StandardCharsets.UTF_8));
+		System.out.println("waiting in");
+		int b = Integer.parseInt(readMsg(in));
+		System.out.println(b);
+		return b;
 	}
 
 	private void runClient() throws IOException {
@@ -430,7 +466,15 @@ public class Client {
 				break;
 			}
 		}
+		System.out.println(sbr.toString());
 
+		if ((sbr.toString().startsWith("1"))&&(sbr.toString().split("\n")[0].equals("1"))){
+			setServerPath(Path.of(sbr.substring(2,sbr.toString().length()-4)));
+			System.out.println(sbr.length());
+
+			System.out.println(sbr.substring((2+sbr.toString().split("\n")[1].length()),sbr.toString().length()-4));
+			return sbr.substring(0,1);
+		}
 
 		return sbr.substring(0, sbr.toString().length() - 4);
 	}
