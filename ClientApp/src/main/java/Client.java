@@ -16,8 +16,8 @@ public class Client {
 	private final DataInputStream in;
 	private final DataOutputStream out;
 
-	private int height = 300;
-	private int width = 400;
+	private int height = 600;
+	private int width = 600;
 	private DefaultListModel<String> myModel = new DefaultListModel<>();
 	private DefaultListModel<String> myModel2 = new DefaultListModel<>();
 	private String filNameServer = "";
@@ -167,6 +167,9 @@ public class Client {
 		JButton refreshButton = new JButton(iconRefresh);
 		refreshButton.setSize(20,20);
 
+		JButton createFolder = new JButton("createFolder");
+		createFolder.setSize(20,40);
+
 
 		frame.getContentPane().add(BorderLayout.NORTH, panalTa);
 		frame.getContentPane().add(BorderLayout.CENTER, panel2);
@@ -175,6 +178,7 @@ public class Client {
 		panel.add(downloadButton);
 		panel.add(removeButton);
 		panel.add(refreshButton);
+		panel.add(createFolder);
 		panel2.setLeftComponent(new JScrollPane(list));
 		panel2.setRightComponent(new JScrollPane(list2));
 		panel2.setResizeWeight(0.5);
@@ -185,9 +189,32 @@ public class Client {
 		fillList(myModel, serverPath);
 		clientList(myModel2, clientPath, "out");
 
+
+
 		frame.setVisible(true);
 
 
+		createFolder.addActionListener(a->{
+			if(taC.getText().equals("")) {
+				try {
+					createFolder(taS,"left");
+					fillList(myModel,serverPath);
+				} catch (IOException e) {
+					e.printStackTrace();
+				}
+
+			} else if (taS.getText().equals("")){
+
+				try {
+					createFolder(taC,"right")	;
+					fillList(myModel2, clientPath);
+				} catch (IOException e) {
+					e.printStackTrace();
+				}
+
+				clientList(myModel2, clientPath);
+			}
+		});
 
 
 		uploadButton.addActionListener(a -> {
@@ -298,6 +325,20 @@ public class Client {
 			});
 	}
 
+	private void createFolder(JTextArea textArea, String pos) throws IOException {
+		if (pos.equals("right")) {
+			if (!new File(clientPath + File.separator + textArea.getText()).exists()){
+				Files.createDirectory(Paths.get(clientPath + (File.separator + textArea.getText())));
+			}
+		} else {
+			String m = "createFolder\n" + textArea.getText();
+			out.write(m.getBytes(StandardCharsets.UTF_8));
+			out.flush();
+			readMsg(in);
+
+		}
+	}
+
 	private void clientList(DefaultListModel<String> myModel2, Path clientPath){
 		File file = new File(clientPath.toString());
 		String[] files = file.list();
@@ -324,7 +365,7 @@ public class Client {
 	}
 
 	private void fillList(DefaultListModel<String> myModel, Path path) throws IOException {
-		List<String> list =  downloadFileList(serverPath);
+		List<String> list =  downloadFileList();
 		myModel.clear();
 		myModel.addElement("...");
 		for (String filename : list) {
@@ -332,7 +373,7 @@ public class Client {
 		}
 	}
 
-	private List<String> downloadFileList(Path path) throws IOException {
+	private List<String> downloadFileList() throws IOException {
 		List<String> list = new ArrayList<String>();
 
 		try {
@@ -468,9 +509,12 @@ public class Client {
 		}
 		System.out.println(sbr.toString());
 
+
 		if ((sbr.toString().startsWith("1"))&&(sbr.toString().split("\n")[0].equals("1"))){
 			setServerPath(Path.of(sbr.substring(2,sbr.toString().length()-4)));
 			System.out.println(sbr.length());
+
+
 
 			System.out.println(sbr.substring((2+sbr.toString().split("\n")[1].length()),sbr.toString().length()-4));
 			return sbr.substring(0,1);
