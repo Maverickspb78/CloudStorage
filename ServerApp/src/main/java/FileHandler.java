@@ -28,7 +28,7 @@ public class FileHandler extends SimpleChannelInboundHandler<String> {
         System.out.println("Message:\n" + msg);
         String command = msg.split("\n")[0];
         if (command.startsWith("list-files")) {
-            Path serverPath = Path.of(msg.split("\n")[1]);
+            serverPath = Path.of(msg.split("\n")[1]);
             File file = new File(serverPath.toString());
             if (Files.isDirectory(Paths.get(serverPath.toString()))) {
                 if (file.getName().equals("...")) {
@@ -39,7 +39,7 @@ public class FileHandler extends SimpleChannelInboundHandler<String> {
                 for (File f : files) {
                     sb.append(f.getName() + "\n");
                 }
-                sb.append("end");
+                sb.append("\nend");
                 ctx.writeAndFlush(sb.toString());
             } else {
                 String[] p = serverPath.toString().split("\\\\");
@@ -88,6 +88,9 @@ public class FileHandler extends SimpleChannelInboundHandler<String> {
             }
 
 
+        }else if(command.startsWith("createFolder")){
+            createFolder(msg.split("\n")[1]);
+            ctx.writeAndFlush("msg\n+end");
         } else if (command.startsWith("remove")) {
             filename = msg.split(" ")[1];
             remove(ctx, filename);
@@ -107,8 +110,11 @@ public class FileHandler extends SimpleChannelInboundHandler<String> {
         }
     }
 
+
+
     @Override
     public void channelInactive(ChannelHandlerContext ctx) {
+
         System.out.println("Client disconnected: " + ctx.channel().remoteAddress());
     }
 
@@ -206,10 +212,17 @@ public class FileHandler extends SimpleChannelInboundHandler<String> {
         return b;
     }
 
+    private void createFolder(String dirName) throws IOException {
+        File file = new File(serverPath + File.separator + dirName);
+        if (!file.exists()){
+            Files.createDirectory(file.toPath());
+        }
+    }
+
 
     public void remove(ChannelHandlerContext ctx, String filename) throws IOException {
         try {
-            File file = new File("server" + File.separator + filename);
+            File file = new File(serverPath + File.separator + filename);
             if (file.exists()) {
                 if (file.delete()) {
                     ctx.writeAndFlush("File " + filename + " deleted from server\nend");
