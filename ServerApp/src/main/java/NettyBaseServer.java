@@ -27,11 +27,8 @@ public class NettyBaseServer {
 						public void initChannel(SocketChannel ch) throws Exception {
 							ch.pipeline().addLast("Logger", new LoggingHandler(LogLevel.INFO));
 							ch.pipeline().addLast("StringDecoder", new StringDecoder()); // in-1
-//							ch.pipeline().addLast("ObjectEncoder", new ObjectEncoder());
-//							ch.pipeline().addLast("ObjectDecoder", new ObjectDecoder(ClassResolvers.cacheDisabled(null)));
 							ch.pipeline().addLast("StringEncoder", new StringEncoder()); // out-1
 							ch.pipeline().addLast("FileHandler", new FileHandler()); // in-2
-//							ch.pipeline().addLast("MoveHandler",	new MoveHandler());
 						}
 					});
 			ChannelFuture future = bootstrap.bind(1234).sync();

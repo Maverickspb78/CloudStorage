@@ -11,6 +11,7 @@
     </content>
     <orderEntry type="jdk" jdkName="14" jdkType="JavaSDK" />
     <orderEntry type="sourceFolder" forTests="false" />
+    <orderEntry type="library" name="Maven: org.xerial:sqlite-jdbc:3.32.3.2" level="project" />
     <orderEntry type="library" name="Maven: io.netty:netty-all:4.1.59.Final" level="project" />
   </component>
 </module>
