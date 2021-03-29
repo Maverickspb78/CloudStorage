@@ -509,9 +509,12 @@ public class Client {
 		}
 		System.out.println(sbr.toString());
 
+
 		if ((sbr.toString().startsWith("1"))&&(sbr.toString().split("\n")[0].equals("1"))){
 			setServerPath(Path.of(sbr.substring(2,sbr.toString().length()-4)));
 			System.out.println(sbr.length());
+
+
 
 			System.out.println(sbr.substring((2+sbr.toString().split("\n")[1].length()),sbr.toString().length()-4));
 			return sbr.substring(0,1);
