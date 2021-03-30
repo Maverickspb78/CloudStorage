@@ -135,7 +135,9 @@ public class FileHandler extends SimpleChannelInboundHandler<String> {
         int b = 0;
         try {
             Class.forName("org.sqlite.JDBC");
-            String url = "jdbc:sqlite:F:\\study\\CloudStorage\\SCloudDB";
+///////////////////////////// Write path to DB /////////////////////////////
+            String url = "jdbc:sqlite:C:/study/CloudStorage/SCloudDB";
+ ///////////////////////////////////////////////////////////////////////////
             connection = DriverManager.getConnection(url);
             System.out.println("Connection to SQLite has been established.");
             Statement statement = connection.createStatement();
@@ -246,26 +248,6 @@ public class FileHandler extends SimpleChannelInboundHandler<String> {
         }
     }
 
-//	public static void connect() {
-//		Connection conn = null;
-//		try {
-//			Class.forName("org.sqlite.JDBC");
-//			String url = "jdbc:sqlite:F:\\study\\CloudStorage\\SCloudDB";
-//			conn = DriverManager.getConnection(url);
-//			System.out.println("Connection to SQLite has been established.");
-//		} catch (SQLException | ClassNotFoundException e) {
-//			System.out.println(e.getMessage());
-//		} finally {
-//			try {
-//				if (conn != null) {
-//					conn.close();
-//				}
-//			} catch (SQLException ex) {
-//				System.out.println(ex.getMessage());
-//			}
-//		}
-//	}
-
     public void upload(ChannelHandlerContext ctx, String msg, int length) throws IOException {
 
 
@@ -277,8 +259,6 @@ public class FileHandler extends SimpleChannelInboundHandler<String> {
             if (!file.exists()) {
                 file.createNewFile();
                 BufferedWriter bufferedWriter = new BufferedWriter(new FileWriter(file));
-//				msg = ctx.channel().read().alloc().buffer().toString();
-//				bufferedWriter.write(msg);
                 bufferedWriter.write(msg.substring(length));
                 bufferedWriter.close();
                 ctx.writeAndFlush("File " + filename + " coped from server\nend");
@@ -317,7 +297,7 @@ public class FileHandler extends SimpleChannelInboundHandler<String> {
 
     @Override
     public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) {
-        //cause.printStackTrace();
+        cause.printStackTrace();
         ctx.close();
     }
 

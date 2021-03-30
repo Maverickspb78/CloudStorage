@@ -5,7 +5,10 @@ import java.awt.event.MouseEvent;
 import java.io.*;
 import java.net.Socket;
 import java.nio.charset.StandardCharsets;
-import java.nio.file.*;
+import java.nio.file.FileSystems;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -44,8 +47,6 @@ public class Client {
 
 
 	public void auth() {
-		AtomicInteger b = new AtomicInteger();
-
 		JFrame frameAuth = new JFrame("authorization");
 		frameAuth.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		frameAuth.setSize(new Dimension(400,110));
@@ -57,14 +58,17 @@ public class Client {
 		login.setMaximumSize(new Dimension(150,10));
 		pass.setMaximumSize(new Dimension(150,10));
 		JButton buttonAuth = new JButton("authorization");
+		buttonAuth.setSize(20,40);
 		JButton buttonReg = new JButton("registration");
+		buttonReg.setSize(20,40);
+//		JButton changePassButton = new JButton("change pass");
+//		changePassButton.setSize(20,40);
 		JPasswordField passwordField = new JPasswordField();
 		JTextArea taAuth = new JTextArea();
 		JPanel panelButton = new JPanel();
 		panelButton.add(buttonAuth);
 		panelButton.add(buttonReg);
-
-
+//		panelButton.add(changePassButton);
 		panelAuth.setLeftComponent(taAuth);
 		panelAuth.setRightComponent(passwordField);
 		panelAuth.setResizeWeight(0.5);
@@ -110,11 +114,53 @@ public class Client {
 
 		});
 
+//		changePassButton.addActionListener(a->{
+//			frameAuth.setVisible(false);
+//			changePass();
+//		});
+
 
 
 		frameAuth.setVisible(true);
 
 	}
+//	public void changePass(){
+//		JFrame frameChangePass = new JFrame("changePass");
+//		frameChangePass.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+//		frameChangePass.setSize(new Dimension(400,110));
+//		frameChangePass.setLocationRelativeTo(null);
+//		JSplitPane panelAuth = new JSplitPane();
+//		JSplitPane panelAuthLabel = new JSplitPane();
+//		JSplitPane paneChange = new JSplitPane();
+//		Label login = new Label("login");
+//		Label pass = new Label("Old password");
+//		Label newPass = new Label("new password");
+//		login.setMaximumSize(new Dimension(150,10));
+//		pass.setMaximumSize(new Dimension(150,10));
+//
+//		JButton changePassButton = new JButton("change pass");
+//		changePassButton.setSize(20,40);
+//		JPasswordField passwordField = new JPasswordField();
+//		JTextArea taAuth = new JTextArea();
+//		JPanel panelButton = new JPanel();
+//
+//		panelButton.add(changePassButton);
+//		panelAuth.setLeftComponent(taAuth);
+//		panelAuth.setRightComponent(passwordField);
+//		panelAuth.setResizeWeight(0.5);
+//		panelAuthLabel.setLeftComponent(login);
+//		panelAuthLabel.setRightComponent(pass);
+//		panelAuthLabel.setResizeWeight(0.55);
+//		paneChange.setBottomComponent(newPass);
+//		frameChangePass.getContentPane().add(BorderLayout.NORTH, panelAuth);
+//		frameChangePass.getContentPane().add(BorderLayout.CENTER, panelAuthLabel);
+//		frameChangePass.getContentPane().add(BorderLayout.SOUTH, panelButton);
+//		frameChangePass.getContentPane().add(paneChange);
+//
+//		frameChangePass.setVisible(true);
+//
+//
+//	}
 
 	public int authorizatior(JTextArea taAuth, JPasswordField passwordField) throws IOException {
 		String msg = "auth\n" + taAuth.getText() + "\n" + passwordField.getText() + "\n";
@@ -170,6 +216,9 @@ public class Client {
 		JButton createFolder = new JButton("createFolder");
 		createFolder.setSize(20,40);
 
+		JButton changePassButton = new JButton("change pass");
+		changePassButton.setSize(20,40);
+
 
 		frame.getContentPane().add(BorderLayout.NORTH, panalTa);
 		frame.getContentPane().add(BorderLayout.CENTER, panel2);
@@ -179,6 +228,8 @@ public class Client {
 		panel.add(removeButton);
 		panel.add(refreshButton);
 		panel.add(createFolder);
+		panel.add(changePassButton);
+
 		panel2.setLeftComponent(new JScrollPane(list));
 		panel2.setRightComponent(new JScrollPane(list2));
 		panel2.setResizeWeight(0.5);
@@ -186,6 +237,7 @@ public class Client {
 		panalTa.setRightComponent(taC);
 		panalTa.setResizeWeight(0.54);
 		panalTa.setSize(99,10);
+
 		fillList(myModel, serverPath);
 		clientList(myModel2, clientPath, "out");
 
@@ -194,22 +246,29 @@ public class Client {
 		frame.setVisible(true);
 
 
-		createFolder.addActionListener(a->{
-			if(taC.getText().equals("")) {
+		createFolder.addActionListener(a-> {
+			if ((taC.getText().equals(""))&&(taS.getText().equals(""))) {
+				System.out.println("null name folder");
+			} else if (taC.getText().equals("")) {
 				try {
-					createFolder(taS,"left");
-					fillList(myModel,serverPath);
+					createFolder(taS, "left");
+					fillList(myModel, serverPath);
+					taS.setText("");
 				} catch (IOException e) {
 					e.printStackTrace();
 				}
 
-			} else if (taS.getText().equals("")){
 
-				try {
-					createFolder(taC,"right")	;
-					fillList(myModel2, clientPath);
-				} catch (IOException e) {
-					e.printStackTrace();
+			} else if (taS.getText().equals("")) {
+				System.out.println(clientPath);
+				if(clientPath.toString().length()>4) {
+					try {
+						createFolder(taC, "right");
+						fillList(myModel2, clientPath);
+						taC.setText("");
+					} catch (IOException e) {
+						e.printStackTrace();
+					}
 				}
 
 				clientList(myModel2, clientPath);
@@ -327,29 +386,32 @@ public class Client {
 
 	private void createFolder(JTextArea textArea, String pos) throws IOException {
 		if (pos.equals("right")) {
-			if (!new File(clientPath + File.separator + textArea.getText()).exists()){
+			if (!new File(clientPath + File.separator + textArea.getText()).exists()) {
 				Files.createDirectory(Paths.get(clientPath + (File.separator + textArea.getText())));
 			}
-		} else {
+		} else if (pos.equals("left")) {
 			String m = "createFolder\n" + textArea.getText();
 			out.write(m.getBytes(StandardCharsets.UTF_8));
 			out.flush();
 			readMsg(in);
-
-		}
+		} else System.out.println("wrong null name folder");
 	}
 
 	private void clientList(DefaultListModel<String> myModel2, Path clientPath){
-		File file = new File(clientPath.toString());
-		String[] files = file.list();
-		myModel2.clear();
-		myModel2.addElement("...");
-		if (files != null) {
-			for (String fil:files){
-				myModel2.addElement(fil);
+		if (clientPath.toString().equals("...")){
+			clientList(myModel2,clientPath,"out");
+
+		} else {
+			File file = new File(clientPath.toString());
+			String[] files = file.list();
+			myModel2.clear();
+			myModel2.addElement("...");
+			if (files != null) {
+				for (String fil : files) {
+					myModel2.addElement(fil);
+				}
 			}
 		}
-
 	}
 
 	private void clientList(DefaultListModel<String> myModel2, Path clientPath, String out){
