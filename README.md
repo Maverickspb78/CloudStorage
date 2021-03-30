@@ -1,6 +1,7 @@
 Запуск Сервера NattyBaseServer
 Запуск клиента Client
 При регистрации юзера создается папка по имени логина в папке с проектом.
+https://drive.google.com/file/d/1tx3LzaV4FsjNVio2tf2L8oU9b2sYP1gH/view?usp=sharing
 
 Реализовано:
 1. AAA.
