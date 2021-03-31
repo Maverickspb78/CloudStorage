@@ -2,9 +2,7 @@
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.SimpleChannelInboundHandler;
 
-
 import java.io.*;
-
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -12,7 +10,16 @@ import java.nio.file.Paths;
 import java.sql.*;
 
 public class FileHandler extends SimpleChannelInboundHandler<String> {
-    private Path serverPath = null;
+    private Path serverPath = Path.of("server");
+    private DBHandler dbHandler = new DBHandler();
+
+    public Path getServerPath() {
+        return serverPath;
+    }
+
+    public void setServerPath(Path serverPath) {
+        this.serverPath = serverPath;
+    }
 
     @Override
     public void channelActive(ChannelHandlerContext ctx) throws Exception {
@@ -117,108 +124,31 @@ public class FileHandler extends SimpleChannelInboundHandler<String> {
     }
 
 
-
-
-
     @Override
     public void channelInactive(ChannelHandlerContext ctx) {
 
         System.out.println("Client disconnected: " + ctx.channel().remoteAddress());
     }
 
-    private int auth(String msg) throws IOException {
-        int id = 0;
+    private int auth(String msg) throws SQLException, IOException {
+        int b = 0;
         String login = msg.split("\n")[1];
         String pass = msg.split("\n")[2];
         String query = "SELECT * FROM Auth WHERE login ='" + login + "' and password = '" + pass + "'";
-        Connection connection = null;
-        int b = 0;
-        try {
-            Class.forName("org.sqlite.JDBC");
-///////////////////////////// Write path to DB /////////////////////////////
-            String url = "jdbc:sqlite:F:/study/CloudStorage/SCloudDB";
- ///////////////////////////////////////////////////////////////////////////
-            connection = DriverManager.getConnection(url);
-            System.out.println("Connection to SQLite has been established.");
-            Statement statement = connection.createStatement();
-            ResultSet resultSet = statement.executeQuery(query);
-            while (resultSet.next()) {
-                id = resultSet.getInt(1);
-                serverPath = Path.of(resultSet.getString("startFolder"));
-//            System.out.println(id + " path " +serverPath);
-                System.out.println(((resultSet.getString("login").equals(login))
-                        && (resultSet.getString("password").equals(pass))
-                        && (resultSet.getInt("already")) == 0));
-                if ((resultSet.getString("login").equals(login))
-                        && (resultSet.getString("password").equals(pass))
-                        && (resultSet.getInt("already")) == 0) {
-
-//                query = "UPDATE Auth SET already = 1 WHERE id='" + id + "'";
-//                System.out.println(query);
-                    b = 1;
-//                resultSet = statement.executeQuery(query);
-                }
-
-            }
-//            while (resultSet.next()) {
-////				int id = resultSet.getInt("id");
-////				String login1 = resultSet.getString("login");
-////				String pass1 = resultSet.getString("password");
-////				int already = resultSet.getInt("already");
-////                startFolder = resultSet.getString("startFolder");
-//
-////				System.out.println("\n================\n");
-////				System.out.println("id: " + id);
-////				System.out.println("Name: " + login1);
-////				System.out.println("Password: " + pass1);
-////				System.out.println("already: " + already);
-////				System.out.println("startFolder :" + startFolder);
-//            }
-        } catch (SQLException | ClassNotFoundException e) {
-            System.out.println(e.getMessage());
-        } finally {
-            try {
-                if (connection != null) {
-                    connection.close();
-                }
-            } catch (SQLException ex) {
-                System.out.println(ex.getMessage());
-            }
-        }
-        File fileAu = new File(serverPath.toString());
-        if (!fileAu.exists()) {
-            Files.createDirectory(serverPath);
-            fileAu = new File(serverPath.toString() + File.separator + "readme.txt");
-            if (!fileAu.exists()) {
-                fileAu.createNewFile();
-            }
-        }
+        b = dbHandler.auth(query, login, pass);
+        setServerPath(dbHandler.getServerPath());
+        System.out.println("serverPath на сервере: " + serverPath);
         return b;
     }
+
 
     public int registration(String msg) {
         String login = msg.split("\n")[1];
         String pass = msg.split("\n")[2];
         String query = "SELECT * FROM Auth WHERE login ='" + login + "' and password = '" + pass + "'";
         String query1 = "INSERT INTO Auth (login,password,already,startFolder) VALUES ('" + login + "','" + pass + "',0,'" + login + "')";
-        Connection connection = null;
         int b = 0;
-        try {
-            Class.forName("org.sqlite.JDBC");
-            String url = "jdbc:sqlite:F:\\study\\CloudStorage\\SCloudDB";
-            connection = DriverManager.getConnection(url);
-            System.out.println("Connection to SQLite has been established.");
-            Statement statement = connection.createStatement();
-            ResultSet resultSet = statement.executeQuery(query);
-            if (!resultSet.next()) {
-                System.out.println("work if !resultSet.next");
-                PreparedStatement preparedStatement = connection.prepareStatement(query1);
-                preparedStatement.execute();
-                b = 1;
-            }
-        } catch (ClassNotFoundException | SQLException e) {
-            e.printStackTrace();
-        }
+        b = dbHandler.registration(query, query1, login, pass);
         return b;
     }
 

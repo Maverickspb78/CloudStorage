@@ -12,12 +12,11 @@ import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.concurrent.atomic.AtomicInteger;
 
-public class Client {
-	private final Socket socket;
-	private final DataInputStream in;
-	private final DataOutputStream out;
+public class Client extends JFrame{
+	private Socket socket;
+	private DataInputStream in;
+	private DataOutputStream out;
 
 	private int height = 600;
 	private int width = 600;
@@ -27,6 +26,8 @@ public class Client {
 	private String filNameClient = "";
 	private Path serverPath = Paths.get("server");
 	private Path clientPath = Paths.get("c:\\");
+	private FileCloudHandler cloudHandler = new FileCloudHandler(serverPath,clientPath,in,out, socket);
+	private ListHandler listHandler = new ListHandler(serverPath, socket);
 
 
 	public Path getServerPath() {
@@ -41,6 +42,12 @@ public class Client {
 		socket = new Socket("localhost", 1234);
 		in = new DataInputStream(socket.getInputStream());
 		out = new DataOutputStream(socket.getOutputStream());
+		cloudHandler.setSocket(socket);
+		cloudHandler.setIn(in);
+		cloudHandler.setOut(out);
+		listHandler.setSocket(socket);
+		listHandler.setIn(in);
+		listHandler.setOut(out);
 
 		auth();
 	}
@@ -166,7 +173,7 @@ public class Client {
 		String msg = "auth\n" + taAuth.getText() + "\n" + passwordField.getText() + "\n";
 		out.write(msg.getBytes(StandardCharsets.UTF_8));
 		System.out.println("waiting in");
-		int b = Integer.parseInt(readMsg(in));
+		int b = Integer.parseInt(cloudHandler.readMsg(in));
 		System.out.println(b);
 		return b;
 	}
@@ -175,7 +182,7 @@ public class Client {
 		String msg = "reg\n" + taAuth.getText()+"\n" + passwordField.getText()+"\n";
 		out.write(msg.getBytes(StandardCharsets.UTF_8));
 		System.out.println("waiting in");
-		int b = Integer.parseInt(readMsg(in));
+		int b = Integer.parseInt(cloudHandler.readMsg(in));
 		System.out.println(b);
 		return b;
 	}
@@ -238,8 +245,13 @@ public class Client {
 		panalTa.setResizeWeight(0.54);
 		panalTa.setSize(99,10);
 
-		fillList(myModel, serverPath);
-		clientList(myModel2, clientPath, "out");
+		serverPath = cloudHandler.getServerPath();
+		clientPath = cloudHandler.getClientPath();
+		listHandler.setServerPath(serverPath);
+		listHandler.setClientPath(clientPath);
+
+		listHandler.fillList(myModel, serverPath);
+		listHandler.clientList(myModel2, clientPath, "out");
 
 
 
@@ -247,12 +259,14 @@ public class Client {
 
 
 		createFolder.addActionListener(a-> {
+			cloudHandler.setClientPath(clientPath);
+			cloudHandler.setServerPath(serverPath);
 			if ((taC.getText().equals(""))&&(taS.getText().equals(""))) {
 				System.out.println("null name folder");
 			} else if (taC.getText().equals("")) {
 				try {
-					createFolder(taS, "left");
-					fillList(myModel, serverPath);
+					cloudHandler.createFolder(taS, "left");
+					listHandler.fillList(myModel, serverPath);
 					taS.setText("");
 				} catch (IOException e) {
 					e.printStackTrace();
@@ -261,57 +275,62 @@ public class Client {
 
 			} else if (taS.getText().equals("")) {
 				System.out.println(clientPath);
-				if(clientPath.toString().length()>4) {
+				if(listHandler.getClientPath().toString().length()>4) {
 					try {
-						createFolder(taC, "right");
-						fillList(myModel2, clientPath);
+						cloudHandler.createFolder(taC, "right");
+						listHandler.fillList(myModel2, clientPath);
 						taC.setText("");
 					} catch (IOException e) {
 						e.printStackTrace();
 					}
 				}
 
-				clientList(myModel2, clientPath);
+				listHandler.clientList(myModel2, clientPath);
 			}
 		});
 
 
 		uploadButton.addActionListener(a -> {
-			System.out.println(sendFile(taC.getText()));
+			cloudHandler.setClientPath(clientPath);
+			cloudHandler.sendFile(taC.getText());
 			try	{
-				fillList(myModel, serverPath);
-				clientList(myModel2, clientPath);
+				listHandler.fillList(myModel, serverPath);
+				listHandler.clientList(myModel2, clientPath);
 			} catch (IOException e){
 				e.printStackTrace();
 			}
 
 		});
 		downloadButton.addActionListener(a -> {
-			System.out.println(downloadFile(taS.getText()));
+			cloudHandler.setServerPath(serverPath);
+			cloudHandler.setClientPath(clientPath);
+			cloudHandler.downloadFile(taS.getText());
 			try	{
-				fillList(myModel, serverPath);
-				clientList(myModel2, clientPath);
+				listHandler.fillList(myModel, serverPath);
+				listHandler.clientList(myModel2, clientPath);
 			} catch (IOException e){
 				e.printStackTrace();
 			}
 		});
 		removeButton.addActionListener(a -> {
 			if(taC.getText().equals("")) {
-				System.out.println(remove(taS.getText(), "server"));
+				cloudHandler.setServerPath(serverPath);
+				cloudHandler.remove(taS.getText(), "server");
 				try {
-					fillList(myModel, serverPath);
+					listHandler.fillList(myModel, serverPath);
 				} catch (IOException e) {
 					e.printStackTrace();
 				}
 			} else {
-				System.out.println(remove(taC.getText(), "client"));
-				clientList(myModel2, clientPath);
+				cloudHandler.setClientPath(clientPath);
+				cloudHandler.remove(taC.getText(), "client");
+				listHandler.clientList(myModel2, clientPath);
 			}
 		});
 		refreshButton.addActionListener(a -> {
 			try {
-				fillList(myModel, serverPath);
-				clientList(myModel2, clientPath);;
+				listHandler.fillList(myModel, serverPath);
+				listHandler.clientList(myModel2, clientPath);;
 			} catch (IOException e) {
 				e.printStackTrace();
 			}
@@ -344,7 +363,7 @@ public class Client {
 							serverPath = Paths.get(serverPath + File.separator + taS.getText());
 						}
 						try {
-							fillList(myModel, serverPath);
+							listHandler.fillList(myModel, serverPath);
 						} catch (IOException ioException) {
 							ioException.printStackTrace();
 						}
@@ -358,23 +377,24 @@ public class Client {
 			list2.addMouseListener(new MouseAdapter() {
 				@Override
 				public void mouseClicked(MouseEvent e) {
+
 					if (e.getClickCount() == 2) {
 						if ((clientPath.toString().length()<4)&&(taC.getText().contains(":\\"))){
 							clientPath=Path.of(taC.getText());
-							clientList(myModel2, clientPath);
+							listHandler.clientList(myModel2, clientPath);
 						}
 						if (Files.isDirectory(Paths.get(clientPath.toString() + File.separator + taC.getText()))) {
-							if ((taC.getText().equals("...") || taS.getText().equals("..."))){
+							if ((taC.getText().equals("...") )){ //|| taS.getText().equals("...")
 								if (clientPath.toAbsolutePath().normalize().getParent()!=null) {
 									clientPath = clientPath.normalize().toAbsolutePath().getParent();
-									clientList(myModel2, clientPath);
+									listHandler.clientList(myModel2, clientPath);
 								} else {
 									clientPath=Path.of(taC.getText());
-									clientList(myModel2, clientPath, "out");
+									listHandler.clientList(myModel2, clientPath, "out");
 								}
 							}else {
 								clientPath = Path.of(clientPath + File.separator + taC.getText());
-								clientList(myModel2, clientPath);
+								listHandler.clientList(myModel2, clientPath);
 							}
 						}
 					}
@@ -384,208 +404,17 @@ public class Client {
 			});
 	}
 
-	private void createFolder(JTextArea textArea, String pos) throws IOException {
-		if (pos.equals("right")) {
-			if (!new File(clientPath + File.separator + textArea.getText()).exists()) {
-				Files.createDirectory(Paths.get(clientPath + (File.separator + textArea.getText())));
-			}
-		} else if (pos.equals("left")) {
-			String m = "createFolder\n" + textArea.getText();
-			out.write(m.getBytes(StandardCharsets.UTF_8));
-			out.flush();
-			readMsg(in);
-		} else System.out.println("wrong null name folder");
-	}
-
-	private void clientList(DefaultListModel<String> myModel2, Path clientPath){
-		if (clientPath.toString().equals("...")){
-			clientList(myModel2,clientPath,"out");
-
-		} else {
-			File file = new File(clientPath.toString());
-			String[] files = file.list();
-			myModel2.clear();
-			myModel2.addElement("...");
-			if (files != null) {
-				for (String fil : files) {
-					myModel2.addElement(fil);
-				}
-			}
-		}
-	}
-
-	private void clientList(DefaultListModel<String> myModel2, Path clientPath, String out){
-		String arg = FileSystems.getDefault().getRootDirectories().toString();
-		arg = arg.replace("[", "");
-		arg = arg.replace("]", "");
-		arg = arg.replace(" ", "");
-		String[] files = arg.split(",");
-		myModel2.clear();
-			for (String fil:files){
-				myModel2.addElement(fil);
-			}
-	}
-
-	private void fillList(DefaultListModel<String> myModel, Path path) throws IOException {
-		List<String> list =  downloadFileList();
-		myModel.clear();
-		myModel.addElement("...");
-		for (String filename : list) {
-			myModel.addElement(filename);
-		}
-	}
-
-	private List<String> downloadFileList() throws IOException {
-		List<String> list = new ArrayList<String>();
-
-		try {
-			StringBuilder sb = new StringBuilder();
-			out.write(("list-files\n" + serverPath + "\n").getBytes(StandardCharsets.UTF_8));
-			while (true) {
-				byte[] buffer = new byte[512];
-				int size = in.read(buffer);
-				sb.append(new String(buffer, 0, size));
-				if (sb.toString().endsWith("end")) {
-					break;
-				}
-			}
-			if (sb.toString().split("\n")[0].equals("false")) {
-				String[] p = serverPath.toString().split("\\\\");
-				if (p.length > 1) {
-					String pah = "";
-					for (int i = 0; i < p.length - 1; i++) {
-						pah += p[i] + "\\";
-					}
-
-					serverPath = Paths.get(pah);
-					sb.delete(0, sb.toString().split("\n")[0].length() +1);
-				}
-				}
-				out.flush();
-
-				String fileString = sb.substring(0, sb.toString().length() - 4);
-				list = Arrays.asList(fileString.split("\n"));
-
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
-
-		return list;
-	}
-
-	private String sendFile(String filename) {
-		try {
-			File file = new File(clientPath + File.separator + filename);
-			if (file.exists()) {
-				String msg = ("upload\n" + filename + "\n");
-				FileInputStream fis = new FileInputStream(file);
-				BufferedInputStream inputStream = new BufferedInputStream(fis, 512);
-				long size = file.length();
-				out.write(msg.getBytes());
-				while ((inputStream.available() > 0)) {
-					out.write(inputStream.readAllBytes());
-				}
-				out.flush();
-				return readMsg(in);
-
-			} else {
-				return "File is not exists";
-			}
-
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
-		return "Something error";
-	}
-
-	private String downloadFile(String filename) {
-		try {
-			File file = new File(clientPath + File.separator + filename);
-			if (!file.exists()) {
-				file.createNewFile();
-
-				out.write(("download\n" + filename+"\n").getBytes(StandardCharsets.UTF_8));
-				out.flush();
-
-				FileOutputStream fos = new FileOutputStream(clientPath + File.separator + filename);
-				while (true) {
-					byte[] buffer = new byte[512];
-					int size = in.read(buffer);
-					fos.write(buffer,0,size);
-					if (in.available()<1) {
-						break;
-					}
-				}
-				fos.close();
-
-				return readMsg(in);
-			} else {
-				return "File is not exists";
-			}
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
-		return "Something error";
-	}
-
-	private String remove(String filename, String position){
-		try {
-			if (position.equals("server")){
-			File file = new File(serverPath + File.separator + filename);
-			if (file.exists()) {
-				String msg = "remove " + filename;
-				out.write(msg.getBytes(StandardCharsets.UTF_8));
-				out.flush();
-				return readMsg(in);
-
-			} else {
-				return "File is not exists";
-			}
-			}
-			else {
-				File file = new File(clientPath + File.separator + filename);
-				if (file.exists()) {
-					file.delete();
-					System.out.println(clientPath);
-					System.out.println(file.getName());
-					return "File " + filename + " deleted from " + clientPath.toString();
-				} else {
-					return "File is not exists";
-				}
-			}
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
-		return "Something error";
-	}
-
-	public String readMsg(DataInputStream in) throws IOException {
-		StringBuilder sbr = new StringBuilder();
-		while (true) {
-			byte[] buffer = new byte[512];
-			int size = in.read(buffer);
-			sbr.append(new String(buffer, 0, size));
-			if (sbr.toString().endsWith("end")) {
-				break;
-			}
-		}
-		System.out.println(sbr.toString());
-
-
-		if ((sbr.toString().startsWith("1"))&&(sbr.toString().split("\n")[0].equals("1"))){
-			setServerPath(Path.of(sbr.substring(2,sbr.toString().length()-4)));
-			System.out.println(sbr.length());
 
 
 
-			System.out.println(sbr.substring((2+sbr.toString().split("\n")[1].length()),sbr.toString().length()-4));
-			return sbr.substring(0,1);
-		}
 
-		return sbr.substring(0, sbr.toString().length() - 4);
-	}
 
 	public static void main(String[] args) throws IOException {
-		new Client();
+//		new Client();
+		CloudGUI cloudGUI = new CloudGUI();
+		cloudGUI.setSize(800,800);
+		cloudGUI.setLocationRelativeTo(null);
+		cloudGUI.setDefaultCloseOperation(DISPOSE_ON_CLOSE);
+
 	}
 }
