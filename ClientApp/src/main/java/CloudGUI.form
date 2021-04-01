@@ -36,13 +36,15 @@
             </constraints>
             <properties/>
           </component>
-          <component id="e86c" class="javax.swing.JTextField" binding="textField1" default-binding="true">
+          <component id="e86c" class="javax.swing.JTextField" binding="taC">
             <constraints>
               <grid row="0" column="2" row-span="1" col-span="1" vsize-policy="0" hsize-policy="6" anchor="8" fill="1" indent="0" use-parent-layout="false">
                 <preferred-size width="150" height="-1"/>
               </grid>
             </constraints>
-            <properties/>
+            <properties>
+              <text value=""/>
+            </properties>
           </component>
           <component id="f195a" class="javax.swing.JButton" binding="downloadButton">
             <constraints>
@@ -60,7 +62,7 @@
               <text value="Upload"/>
             </properties>
           </component>
-          <component id="90dd" class="javax.swing.JTextField" binding="textField2" default-binding="true">
+          <component id="90dd" class="javax.swing.JTextField" binding="taS">
             <constraints>
               <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="6" anchor="8" fill="1" indent="0" use-parent-layout="false">
                 <preferred-size width="150" height="-1"/>

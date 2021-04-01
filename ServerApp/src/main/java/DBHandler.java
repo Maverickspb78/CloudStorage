@@ -44,11 +44,7 @@ public class DBHandler {
             if ((resultSet.getString("login").equals(login))
                     && (resultSet.getString("password").equals(pass))
                     && (resultSet.getInt("already")) == 0) {
-
-//                query = "UPDATE Auth SET already = 1 WHERE id='" + id + "'";
-//                System.out.println(query);
                 b = 1;
-//                resultSet = statement.executeQuery(query);
             }
         }
         System.out.println("serverPact при авторизации: " +serverPath);

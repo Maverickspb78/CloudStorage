@@ -21,7 +21,17 @@ public class FileCloudHandler {
         this.socket = socket;
     }
 
+    public FileCloudHandler(){
 
+    }
+
+    public DataInputStream getIn() {
+        return in;
+    }
+
+    public DataOutputStream getOut() {
+        return out;
+    }
 
     public Path getServerPath() {
         return serverPath;
@@ -141,7 +151,7 @@ public class FileCloudHandler {
         return "Something error";
     }
 
-    public void createFolder(JTextArea textArea, String pos) throws IOException {
+    public void createFolder(JTextField textArea, String pos) throws IOException {
         if (pos.equals("right")) {
             if (!new File(clientPath + File.separator + textArea.getText()).exists()) {
                 Files.createDirectory(Paths.get(clientPath + (File.separator + textArea.getText())));

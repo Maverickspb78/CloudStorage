@@ -13,15 +13,19 @@ import java.util.Arrays;
 import java.util.List;
 
 public class ListHandler {
-    private Path serverPath = Paths.get("server");
-    private Path clientPath = Paths.get("c:\\");
+    private Path serverPath; //= Paths.get("server");
+    private Path clientPath; // = Paths.get("c:\\");
     private DataInputStream in;
     private DataOutputStream out;
     private Socket socket;
 
-    public ListHandler(Path serverPath, Socket socket) {
+    public ListHandler(Path serverPath, Path clientPath, Socket socket, DataInputStream in, DataOutputStream out) throws IOException {
+        System.out.println(socket);
         this.serverPath = serverPath;
         this.socket = socket;
+        System.out.println(socket);
+//        out = new DataOutputStream(socket.getOutputStream());
+//        in = new DataInputStream(socket.getInputStream());
     }
 
     public Path getServerPath() {
@@ -109,6 +113,8 @@ public class ListHandler {
         List<String> list = new ArrayList<String>();
 
         try {
+            out = new DataOutputStream(socket.getOutputStream());
+            in = new DataInputStream(socket.getInputStream());
             StringBuilder sb = new StringBuilder();
             out.write(("list-files\n" + serverPath + "\n").getBytes(StandardCharsets.UTF_8));
             while (true) {

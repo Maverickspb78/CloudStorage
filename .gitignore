@@ -1,4 +1,5 @@
 # Project exclude paths
+/.gitignore/
 /target/
 /ServerApp/target/
 /ClientApp/target/
