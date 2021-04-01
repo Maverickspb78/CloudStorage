@@ -1,4 +1,10 @@
+import com.intellij.uiDesigner.core.GridConstraints;
+import com.intellij.uiDesigner.core.GridLayoutManager;
+import com.intellij.uiDesigner.core.Spacer;
+
 import javax.swing.*;
+import javax.swing.border.TitledBorder;
+import java.awt.*;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
@@ -33,7 +39,7 @@ public class AuthorizationGUI extends JDialog {
         out = new DataOutputStream(socket.getOutputStream());
 //        cloudHandler.setIn(in);
 //        cloudHandler.setOut(out);
-        cloudHandler = new FileCloudHandler(serverPath, Path.of(""), in, out, socket );
+        cloudHandler = new FileCloudHandler(serverPath, Path.of(""), in, out, socket);
 //        this.socket = socket;
 //        this.in = in;
 //        this.out = out;

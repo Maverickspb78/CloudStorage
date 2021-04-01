@@ -19,7 +19,7 @@ public class DBHandler {
         try {
             Class.forName("org.sqlite.JDBC");
             ///////////////////////////// Write path to DB /////////////////////////////
-            String url = "jdbc:sqlite:C:/study/CloudStorage/SCloudDB";
+            String url = "jdbc:sqlite:F:/study/CloudStorage/SCloudDB";
             ///////////////////////////////////////////////////////////////////////////
             connection = DriverManager.getConnection(url);
             System.out.println("Connection to SQLite has been established.");

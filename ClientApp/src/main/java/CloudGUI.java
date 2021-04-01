@@ -1,3 +1,5 @@
+
+
 import javax.swing.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
@@ -25,6 +27,8 @@ public class CloudGUI extends JDialog {
     private JButton searchButton;
     private JComboBox menuBox;
     private JPanel panel1;
+    private JLabel infoLable;
+    private JLabel sizeLable;
 
 
     private Socket socket;
@@ -33,8 +37,8 @@ public class CloudGUI extends JDialog {
 
     private DefaultListModel<String> myModel = new DefaultListModel<>();
     private DefaultListModel<String> myModel2 = new DefaultListModel<>();
-    private Path serverPath; // = Paths.get("server");
-    private Path clientPath; // = Paths.get("c:\\");
+    private Path serverPath;
+    private Path clientPath;
     private FileCloudHandler cloudHandler;
     private ListHandler listHandler;
 
@@ -69,7 +73,7 @@ public class CloudGUI extends JDialog {
         in = new DataInputStream(socket.getInputStream());
         out = new DataOutputStream(socket.getOutputStream());
 //        cloudHandler = new FileCloudHandler(serverPath,clientPath, in , out , socket);
-        listHandler = new ListHandler(cloudHandler.getServerPath(), cloudHandler.getClientPath(), socket, in , out);
+        listHandler = new ListHandler(cloudHandler.getServerPath(), cloudHandler.getClientPath(), socket, in, out);
 
 
 //        frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
@@ -95,26 +99,26 @@ public class CloudGUI extends JDialog {
             cloudHandler.setServerPath(serverPath);
             cloudHandler.setClientPath(clientPath);
             cloudHandler.downloadFile(taS.getText());
-            try	{
+            try {
                 listHandler.fillList(myModel, serverPath);
                 listHandler.clientList(myModel2, clientPath);
-            } catch (IOException e){
+            } catch (IOException e) {
                 e.printStackTrace();
             }
         });
         uploadButton.addActionListener(a -> {
             cloudHandler.setClientPath(clientPath);
             cloudHandler.sendFile(taC.getText());
-            try	{
+            try {
                 listHandler.fillList(myModel, serverPath);
                 listHandler.clientList(myModel2, clientPath);
-            } catch (IOException e){
+            } catch (IOException e) {
                 e.printStackTrace();
             }
         });
 
         removeButton.addActionListener(a -> {
-            if(taC.getText().equals("")) {
+            if (taC.getText().equals("")) {
                 cloudHandler.setServerPath(serverPath);
                 cloudHandler.remove(taS.getText(), "server");
                 try {
@@ -122,7 +126,7 @@ public class CloudGUI extends JDialog {
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
-            } else if (taS.getText().equals("")){
+            } else if (taS.getText().equals("")) {
                 cloudHandler.setClientPath(clientPath);
                 cloudHandler.remove(taC.getText(), "client");
                 listHandler.clientList(myModel2, clientPath);
@@ -132,7 +136,7 @@ public class CloudGUI extends JDialog {
         createFolder.addActionListener(a -> {
             cloudHandler.setClientPath(clientPath);
             cloudHandler.setServerPath(serverPath);
-            if ((taC.getText().equals(""))&&(taS.getText().equals(""))) {
+            if ((taC.getText().equals("")) && (taS.getText().equals(""))) {
                 System.out.println("null name folder");
             } else if (taC.getText().equals("")) {
                 try {
@@ -146,7 +150,7 @@ public class CloudGUI extends JDialog {
 
             } else if (taS.getText().equals("")) {
                 System.out.println(clientPath);
-                if(listHandler.getClientPath().toString().length()>4) {
+                if (listHandler.getClientPath().toString().length() > 4) {
                     try {
                         cloudHandler.createFolder(taC, "right");
                         listHandler.fillList(myModel2, clientPath);
@@ -168,12 +172,12 @@ public class CloudGUI extends JDialog {
 
         });
 
-        list1.addListSelectionListener(a ->{
+        list1.addListSelectionListener(a -> {
             taC.setText("");
             taS.setText((String) list1.getSelectedValue());
 
         });
-        list2.addListSelectionListener(a ->{
+        list2.addListSelectionListener(a -> {
             taS.setText("");
             taC.setText((String) list2.getSelectedValue());
         });
@@ -183,7 +187,7 @@ public class CloudGUI extends JDialog {
             @Override
             public void mouseClicked(MouseEvent e) {
                 if (e.getClickCount() == 2) {
-                    if (taS.getText().equals("...")){
+                    if (taS.getText().equals("...")) {
                         String[] p = serverPath.toString().split("\\\\");
                         if (p.length > 1) {
                             String pah = "";
@@ -212,20 +216,20 @@ public class CloudGUI extends JDialog {
             public void mouseClicked(MouseEvent e) {
 
                 if (e.getClickCount() == 2) {
-                    if ((clientPath.toString().length()<4)&&(taC.getText().contains(":\\"))){
-                        clientPath= Path.of(taC.getText());
+                    if ((clientPath.toString().length() < 4) && (taC.getText().contains(":\\"))) {
+                        clientPath = Path.of(taC.getText());
                         listHandler.clientList(myModel2, clientPath);
                     }
                     if (Files.isDirectory(Paths.get(clientPath.toString() + File.separator + taC.getText()))) {
-                        if ((taC.getText().equals("...") )){ //|| taS.getText().equals("...")
-                            if (clientPath.toAbsolutePath().normalize().getParent()!=null) {
+                        if ((taC.getText().equals("..."))) { //|| taS.getText().equals("...")
+                            if (clientPath.toAbsolutePath().normalize().getParent() != null) {
                                 clientPath = clientPath.normalize().toAbsolutePath().getParent();
                                 listHandler.clientList(myModel2, clientPath);
                             } else {
-                                clientPath=Path.of(taC.getText());
+                                clientPath = Path.of(taC.getText());
                                 listHandler.clientList(myModel2, clientPath, "out");
                             }
-                        }else {
+                        } else {
                             clientPath = Path.of(clientPath + File.separator + taC.getText());
                             listHandler.clientList(myModel2, clientPath);
                         }
