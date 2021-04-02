@@ -4,10 +4,11 @@ import io.netty.channel.SimpleChannelInboundHandler;
 
 import java.io.*;
 import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
+import java.nio.file.*;
+import java.nio.file.attribute.BasicFileAttributes;
 import java.sql.*;
+
+import static java.nio.file.FileVisitResult.CONTINUE;
 
 public class FileHandler extends SimpleChannelInboundHandler<String> {
     private Path serverPath = Path.of("server");
@@ -116,7 +117,16 @@ public class FileHandler extends SimpleChannelInboundHandler<String> {
         } else if (command.startsWith("download")) {
             filename = msg.split("\n")[1];
             download(ctx, filename);
-        } else {
+        } else if (command.startsWith("changePass")){
+            System.out.println("changePass");
+            String newPass = msg.split("\n")[1];
+            if (dbHandler.changePass(newPass)) {
+                ctx.writeAndFlush("password changed\nend");
+            } else {
+                ctx.writeAndFlush( "password not changed\nend");
+            }
+
+        }else {
             System.out.println("Chanel closed");
             ctx.channel().closeFuture();
             ctx.channel().close();
@@ -137,7 +147,6 @@ public class FileHandler extends SimpleChannelInboundHandler<String> {
         String query = "SELECT * FROM Auth WHERE login ='" + login + "' and password = '" + pass + "'";
         b = dbHandler.auth(query, login, pass);
         setServerPath(dbHandler.getServerPath());
-        System.out.println("serverPath на сервере: " + serverPath);
         return b;
     }
 
@@ -166,10 +175,43 @@ public class FileHandler extends SimpleChannelInboundHandler<String> {
             File file = new File(serverPath + File.separator + filename);
 
             if (file.exists()) {
+                if (file.isDirectory()){
+                    Path dir = Paths.get(serverPath + File.separator + filename);
+                    try {
+                        Files.walkFileTree(dir, new SimpleFileVisitor<Path>() {
+
+                            @Override
+                            public FileVisitResult visitFile(Path file,
+                                                             BasicFileAttributes attrs) throws IOException {
+
+                                System.out.println("Deleting file: " + file);
+                                Files.delete(file);
+                                return CONTINUE;
+                            }
+
+                            @Override
+                            public FileVisitResult postVisitDirectory(Path dir,
+                                                                      IOException exc) throws IOException {
+
+                                System.out.println("Deleting dir: " + dir);
+                                if (exc == null) {
+                                    Files.delete(dir);
+                                    return CONTINUE;
+                                } else {
+                                    throw exc;
+                                }
+                            }
+
+                        });
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+                    ctx.writeAndFlush("The file " + filename + " is not deleted from the server\nend");
+                }
                 if (file.delete()) {
                     ctx.writeAndFlush("File " + filename + " deleted from server\nend");
                 } else {
-                    ctx.writeAndFlush("The file " + filename + " is not deleted from the server\nend");
+//                    ctx.writeAndFlush("The file " + filename + " is not deleted from the server\nend");
                 }
             }
 

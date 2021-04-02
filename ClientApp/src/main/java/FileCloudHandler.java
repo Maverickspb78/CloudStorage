@@ -2,9 +2,10 @@ import javax.swing.*;
 import java.io.*;
 import java.net.Socket;
 import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
+import java.nio.file.*;
+import java.nio.file.attribute.BasicFileAttributes;
+
+import static java.nio.file.FileVisitResult.CONTINUE;
 
 public class FileCloudHandler {
     private Path serverPath = Paths.get("server");
@@ -137,10 +138,42 @@ public class FileCloudHandler {
             else {
                 File file = new File(clientPath + File.separator + filename);
                 if (file.exists()) {
-                    file.delete();
-                    System.out.println(clientPath);
-                    System.out.println(file.getName());
-                    return "File " + filename + " deleted from " + clientPath.toString();
+                    if (file.isDirectory()) {
+                        Path dir = Paths.get(clientPath + File.separator + filename);
+                        try {
+                            Files.walkFileTree(dir, new SimpleFileVisitor<Path>() {
+
+                                @Override
+                                public FileVisitResult visitFile(Path file,
+                                                                 BasicFileAttributes attrs) throws IOException {
+
+                                    System.out.println("Deleting file: " + file);
+                                    Files.delete(file);
+                                    return CONTINUE;
+                                }
+
+                                @Override
+                                public FileVisitResult postVisitDirectory(Path dir,
+                                                                          IOException exc) throws IOException {
+
+                                    System.out.println("Deleting dir: " + dir);
+                                    if (exc == null) {
+                                        Files.delete(dir);
+                                        return CONTINUE;
+                                    } else {
+                                        throw exc;
+                                    }
+                                }
+
+                            });
+                        } catch (IOException e) {
+                            e.printStackTrace();
+                        }
+                        file.delete();
+                        System.out.println(clientPath);
+                        System.out.println(file.getName());
+                        return "File " + filename + " deleted from " + clientPath.toString();
+                    }
                 } else {
                     return "File is not exists";
                 }

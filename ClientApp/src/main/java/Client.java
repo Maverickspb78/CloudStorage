@@ -415,7 +415,7 @@ public class Client extends JFrame{
 		AuthorizationGUI authorizationGUI = new AuthorizationGUI();
 		authorizationGUI.setSize(300,150);
 		authorizationGUI.setLocationRelativeTo(null);
-		authorizationGUI.setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
+		authorizationGUI.setDefaultCloseOperation(EXIT_ON_CLOSE);
 //		CloudGUI cloudGUI = new CloudGUI();
 //		cloudGUI.setSize(800,800);
 //		cloudGUI.setLocationRelativeTo(null);

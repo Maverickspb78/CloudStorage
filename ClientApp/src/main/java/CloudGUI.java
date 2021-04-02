@@ -1,6 +1,7 @@
 
 
 import javax.swing.*;
+import java.awt.event.ActionEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.io.DataInputStream;
@@ -13,7 +14,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 
 
-public class CloudGUI extends JDialog {
+public class CloudGUI extends JFrame {
     private JPanel contentPane;
     private JButton removeButton;
     private JButton exitButton;
@@ -82,7 +83,7 @@ public class CloudGUI extends JDialog {
 
         setContentPane(contentPane);
         setVisible(true);
-        setModal(true);
+//        setModal(true);
         list1.setModel(myModel);
         list2.setModel(myModel2);
 
@@ -159,7 +160,6 @@ public class CloudGUI extends JDialog {
                         e.printStackTrace();
                     }
                 }
-
                 listHandler.clientList(myModel2, clientPath);
             }
         });
@@ -169,7 +169,7 @@ public class CloudGUI extends JDialog {
         });
 
         exitButton.addActionListener(a -> {
-
+            System.exit(0);
         });
 
         list1.addListSelectionListener(a -> {
@@ -210,11 +210,9 @@ public class CloudGUI extends JDialog {
         });
 
         //addListSelectionListener to the client window
-
         list2.addMouseListener(new MouseAdapter() {
             @Override
             public void mouseClicked(MouseEvent e) {
-
                 if (e.getClickCount() == 2) {
                     if ((clientPath.toString().length() < 4) && (taC.getText().contains(":\\"))) {
                         clientPath = Path.of(taC.getText());
@@ -235,18 +233,22 @@ public class CloudGUI extends JDialog {
                         }
                     }
                 }
-
             }
 
         });
+
+        menuBox.addActionListener(a->{
+            if (menuBox.getSelectedItem().toString().equals("")){
+
+            }
+            if (menuBox.getSelectedItem().toString().equals("changePass")){
+                System.out.println("changePass");
+                new ChangePassGUI(cloudHandler);
+                menuBox.setSelectedIndex(0);
+            }
+            if (menuBox.getSelectedItem().toString().equals("removeAccount")){
+
+            }
+        });
     }
-
-
-//    public static void main(String[] args) throws IOException {
-////        CloudGUI dialog = new CloudGUI();
-////        dialog.pack();
-////        dialog.setVisible(true);
-////        System.exit(0);
-//    }
-
 }

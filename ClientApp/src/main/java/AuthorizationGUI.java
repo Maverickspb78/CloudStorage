@@ -12,7 +12,7 @@ import java.net.Socket;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 
-public class AuthorizationGUI extends JDialog {
+public class AuthorizationGUI extends JFrame {
     private FileCloudHandler cloudHandler;
     private JPanel contentPaneA;
     private JTextField loginFieldA;
@@ -31,7 +31,6 @@ public class AuthorizationGUI extends JDialog {
 
         setContentPane(contentPaneA);
         setVisible(true);
-        setModal(true);
         socket = new Socket("localhost", 1234);
 
 //        socket = cloudHandler.getSocket();
@@ -54,7 +53,7 @@ public class AuthorizationGUI extends JDialog {
                     CloudGUI cloudGUI = new CloudGUI(socket, cloudHandler);
                     cloudGUI.setSize(800, 800);
                     cloudGUI.setLocationRelativeTo(null);
-                    cloudGUI.setDefaultCloseOperation(DISPOSE_ON_CLOSE);
+                    cloudGUI.setDefaultCloseOperation(EXIT_ON_CLOSE);
                     cloudGUI.setVisible(true);
                 } else {
                     loginFieldA.setText("Wrong login or password");

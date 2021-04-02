@@ -103,8 +103,8 @@
               <editable value="true"/>
               <model>
                 <item value=""/>
-                <item value="chengePass"/>
-                <item value="deleteAkaunt"/>
+                <item value="changePass"/>
+                <item value="removeAccount"/>
               </model>
             </properties>
           </component>
