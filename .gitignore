@@ -1,2 +1,12 @@
 # Project exclude paths
+/.gitignore/
 /target/
+/ServerApp/target/
+/ClientApp/target/
+/Info.txt
+/.idea/
+/client/
+/server/
+/login2/
+/login1/
+
