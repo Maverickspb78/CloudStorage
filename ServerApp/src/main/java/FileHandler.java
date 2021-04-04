@@ -35,12 +35,12 @@ public class FileHandler extends SimpleChannelInboundHandler<String> {
 
 
         String filename = "";
-        System.out.println("Message:\n" + msg);
         String command = msg.split("\n")[0];
+
+        //Команда на создания листа файлов в папке
+
         if (command.startsWith("list-files")) {
-
             serverPath = Path.of(msg.split("\n")[1]);
-
             File file = new File(serverPath.toString());
             if (Files.isDirectory(Paths.get(serverPath.toString()))) {
                 if (file.getName().equals("...")) {
@@ -76,6 +76,8 @@ public class FileHandler extends SimpleChannelInboundHandler<String> {
                 }
             }
 
+            //Команда на регистрация пользователя
+
         } else if (command.startsWith("reg")) {
             String anser = "" + registration(msg);
             System.out.println("сработала регистрация");
@@ -91,22 +93,30 @@ public class FileHandler extends SimpleChannelInboundHandler<String> {
                 ctx.writeAndFlush(anser + "\nend");
             }
 
+            //команда на авторизация
+
         } else if (command.startsWith("auth")) {
             String anser = "" + auth(msg);
             if (anser.equals("1")) {
-                ctx.writeAndFlush(anser + "\n" + serverPath.toString() + "\n" + size +"\nend");
+                ctx.writeAndFlush(anser + "\n" + serverPath.toString() + "\n" + size + "\nend");
             } else {
                 ctx.writeAndFlush(anser + "\nend");
             }
 
+            //команда на создании папки
 
         } else if (command.startsWith("createFolder")) {
             createFolder(msg.split("\n")[1]);
             ctx.writeAndFlush("msg\n+end");
 
+            //команда на удаление
+
         } else if (command.startsWith("remove")) {
             filename = msg.split(" ")[1];
             remove(ctx, filename);
+
+            //команда на загрузку файла от клиента
+
         } else if (command.startsWith("upload")) {
             filename = msg.split("\n")[1];
             String lengthSize = msg.split("\n")[2];
@@ -114,6 +124,8 @@ public class FileHandler extends SimpleChannelInboundHandler<String> {
             int length = command.length() + filename.length() + 2;
             System.out.println(length);
             upload(ctx, msg, length);
+
+//            команда на загрузку файла клиенту
 
         } else if (command.startsWith("download")) {
             filename = msg.split("\n")[1];
@@ -126,6 +138,7 @@ public class FileHandler extends SimpleChannelInboundHandler<String> {
             }
             ctx.writeAndFlush("error\nend");
 
+//            команда на смену пароля
 
         } else if (command.startsWith("changePass")) {
             System.out.println("changePass");
@@ -150,6 +163,7 @@ public class FileHandler extends SimpleChannelInboundHandler<String> {
         System.out.println("Client disconnected: " + ctx.channel().remoteAddress());
     }
 
+    //Авторизация
     private int auth(String msg) throws SQLException, IOException {
         int b = 0;
         String login = msg.split("\n")[1];
@@ -162,7 +176,7 @@ public class FileHandler extends SimpleChannelInboundHandler<String> {
         return b;
     }
 
-
+//регистрация
     public int registration(String msg) {
         String login = msg.split("\n")[1];
         String pass = msg.split("\n")[2];
@@ -173,7 +187,7 @@ public class FileHandler extends SimpleChannelInboundHandler<String> {
         return b;
     }
 
-
+// создание папки
     private void createFolder(String dirName) throws IOException {
         File file = new File(serverPath + File.separator + dirName);
         if (!file.exists()) {
@@ -181,7 +195,7 @@ public class FileHandler extends SimpleChannelInboundHandler<String> {
         }
     }
 
-
+// удаление фала\папок
     public void remove(ChannelHandlerContext ctx, String filename) throws IOException {
         try {
             File file = new File(serverPath + File.separator + filename);
@@ -231,7 +245,7 @@ public class FileHandler extends SimpleChannelInboundHandler<String> {
             ctx.writeAndFlush("ERROR\nend".getBytes(StandardCharsets.UTF_8));
         }
     }
-
+// загрузка файла на сервер
     public void upload(ChannelHandlerContext ctx, String msg, int length) throws IOException {
 
 
@@ -253,7 +267,7 @@ public class FileHandler extends SimpleChannelInboundHandler<String> {
             ctx.writeAndFlush("ERROR\nend");
         }
     }
-
+// загрузка файла клиенту
     public void download(ChannelHandlerContext ctx, String filename) throws IOException {
         try {
             File file = new File(serverPath + File.separator + filename);
@@ -278,48 +292,48 @@ public class FileHandler extends SimpleChannelInboundHandler<String> {
 
 
     }
-
+// удаление директории и аккаунта
     public void removeAcc(ChannelHandlerContext ctx) throws IOException {
         Path dir = Paths.get(dbHandler.getServerPath().toString());
 
-            try {
-                Files.walkFileTree(dir, new SimpleFileVisitor<Path>() {
+        try {
+            Files.walkFileTree(dir, new SimpleFileVisitor<Path>() {
 
-                    @Override
-                    public FileVisitResult visitFile(Path file,
-                                                     BasicFileAttributes attrs) throws IOException {
+                @Override
+                public FileVisitResult visitFile(Path file,
+                                                 BasicFileAttributes attrs) throws IOException {
 
-                        System.out.println("Deleting file: " + file);
-                        Files.delete(file);
+                    System.out.println("Deleting file: " + file);
+                    Files.delete(file);
+                    return CONTINUE;
+                }
+
+                @Override
+                public FileVisitResult postVisitDirectory(Path dir,
+                                                          IOException exc) throws IOException {
+
+                    System.out.println("Deleting dir: " + dir);
+                    if (exc == null) {
+                        Files.delete(dir);
                         return CONTINUE;
+                    } else {
+                        throw exc;
                     }
-
-                    @Override
-                    public FileVisitResult postVisitDirectory(Path dir,
-                                                              IOException exc) throws IOException {
-
-                        System.out.println("Deleting dir: " + dir);
-                        if (exc == null) {
-                            Files.delete(dir);
-                            return CONTINUE;
-                        } else {
-                            throw exc;
-                        }
-                    }
-                });
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
+                }
+            });
+        } catch (IOException e) {
+            e.printStackTrace();
         }
-
-        public long sizeCloud(Path serverPath) throws IOException {
-            Path folder = (serverPath);
-            return Files.walk(folder)
-                    .map(Path::toFile)
-                    .filter(File::isFile)
-                    .mapToLong(File::length)
-                    .sum();
-        }
+    }
+//  размер файлов в облаке
+    public long sizeCloud(Path serverPath) throws IOException {
+        Path folder = (serverPath);
+        return Files.walk(folder)
+                .map(Path::toFile)
+                .filter(File::isFile)
+                .mapToLong(File::length)
+                .sum();
+    }
 
 
     @Override

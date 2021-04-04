@@ -7,14 +7,14 @@ public class DelAccountGui extends JDialog {
     private JButton yesButton;
     private JButton noButton;
     private JPanel panel;
-
+//диалог удаление аккаунта
     public DelAccountGui(FileCloudHandler cloudHandler) {
         this.cloudHandler = cloudHandler;
         setContentPane(panel);
         setSize(220, 120);
         setLocationRelativeTo(null);
         setVisible(true);
-
+//команда на удаление аккаунта с выходом после удаления
         yesButton.addActionListener(a->{
             try {
                 if (delAccount().equals("account delete")){
@@ -26,13 +26,13 @@ public class DelAccountGui extends JDialog {
                 e.printStackTrace();
             }
         });
-
+//команда отмена
         noButton.addActionListener(a->{
             dispose();
         });
         
     }
-
+//удаление аккаунта
     public String delAccount() throws IOException {
         String msg = "delAccount\n";
         cloudHandler.getOut().write(msg.getBytes(StandardCharsets.UTF_8));

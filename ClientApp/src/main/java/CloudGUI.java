@@ -66,7 +66,7 @@ public class CloudGUI extends JFrame {
     public void setServerPath(Path serverPath) {
         this.serverPath = serverPath;
     }
-
+// Основное окно клиента
     public CloudGUI(Socket socket, FileCloudHandler cloudHandler) throws IOException {
         setResizable(false);
         this.socket = socket;
@@ -83,7 +83,7 @@ public class CloudGUI extends JFrame {
         listHandler.fillList(myModel, serverPath);
         listHandler.clientList(myModel2, clientPath, "out");
         sizeLable.setText("" + cloudHandler.getSizeCloud()+ " из " + "Size" );
-
+//кнопка download
         downloadButton.addActionListener(a -> {
             cloudHandler.setServerPath(serverPath);
             cloudHandler.setClientPath(clientPath);
@@ -95,6 +95,7 @@ public class CloudGUI extends JFrame {
                 e.printStackTrace();
             }
         });
+//кнопка upload
         uploadButton.addActionListener(a -> {
             cloudHandler.setClientPath(clientPath);
             cloudHandler.sendFile(taC.getText());
@@ -105,7 +106,7 @@ public class CloudGUI extends JFrame {
                 e.printStackTrace();
             }
         });
-
+//кнопка удаление
         removeButton.addActionListener(a -> {
             if (taC.getText().equals("")) {
                 cloudHandler.setServerPath(serverPath);
@@ -121,7 +122,7 @@ public class CloudGUI extends JFrame {
                 listHandler.clientList(myModel2, clientPath);
             }
         });
-
+//кнопка создания директории
         createFolder.addActionListener(a -> {
             cloudHandler.setClientPath(clientPath);
             cloudHandler.setServerPath(serverPath);
@@ -151,7 +152,7 @@ public class CloudGUI extends JFrame {
                 listHandler.clientList(myModel2, clientPath);
             }
         });
-
+//Кнопка поиска файла
         searchButton.addActionListener(a -> {
             if ((taC.getText().equals(""))) {
                 list1.setSelectedIndex(listHandler.search(taS.getText(), myModel));
@@ -161,7 +162,7 @@ public class CloudGUI extends JFrame {
             }
 
         });
-
+//Кнопка выхода из приложения
         exitButton.addActionListener(a -> {
             System.exit(0);
         });
@@ -176,7 +177,7 @@ public class CloudGUI extends JFrame {
             taC.setText((String) list2.getSelectedValue());
         });
 
-        //addListSelectionListener to the server window
+        //addListSelectionListener to the server window(в список файлов)
         list1.addMouseListener(new MouseAdapter() {
             @Override
             public void mouseClicked(MouseEvent e) {
@@ -203,7 +204,7 @@ public class CloudGUI extends JFrame {
             }
         });
 
-        //addListSelectionListener to the client window
+        //addListSelectionListener to the client window(в список файлов)
         list2.addMouseListener(new MouseAdapter() {
             @Override
             public void mouseClicked(MouseEvent e) {
@@ -230,15 +231,17 @@ public class CloudGUI extends JFrame {
             }
 
         });
-
+//меню с удалением аккаунта и сменой пароля
         menuBox.addActionListener(a->{
             if (menuBox.getSelectedItem().toString().equals("")){
 
             }
+//            если нажат пункт меню смены пароля
             if (menuBox.getSelectedItem().toString().equals("changePass")){
                 new ChangePassGUI(cloudHandler);
                 menuBox.setSelectedIndex(0);
             }
+//            если нажат пункт меню удаление аккаунта
             if (menuBox.getSelectedItem().toString().equals("removeAccount")){
                 new DelAccountGui(cloudHandler);
                 menuBox.setSelectedIndex(0);

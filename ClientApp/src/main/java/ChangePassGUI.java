@@ -12,13 +12,14 @@ public class ChangePassGUI extends JDialog {
 
     private FileCloudHandler cloudHandler;
 
-
+//Смена пароля
     public ChangePassGUI(FileCloudHandler cloudHandler) {
         this.cloudHandler = cloudHandler;
         setContentPane(panel);
         setSize(220, 120);
         setLocationRelativeTo(null);
         setVisible(true);
+//        кнопка смены пароля
         button1.addActionListener(a -> {
             try {
                 if (changePass().equals("password changed")){
@@ -29,11 +30,12 @@ public class ChangePassGUI extends JDialog {
                 e.printStackTrace();
             }
         });
+//        кнопка отмена
         button2.addActionListener(a -> {
         dispose();
         });
     }
-
+//смена пароля
     public String changePass() throws IOException {
         String msg = "changePass\n" + passwordField1.getText() + "\n";
         cloudHandler.getOut().write(msg.getBytes(StandardCharsets.UTF_8));

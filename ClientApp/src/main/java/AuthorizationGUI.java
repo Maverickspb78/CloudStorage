@@ -26,7 +26,7 @@ public class AuthorizationGUI extends JFrame {
     private Socket socket;
     private Path serverPath;
 
-
+// диалог авторизации
     public AuthorizationGUI() throws IOException {
 
         setContentPane(contentPaneA);
@@ -36,6 +36,7 @@ public class AuthorizationGUI extends JFrame {
         in = new DataInputStream(socket.getInputStream());
         out = new DataOutputStream(socket.getOutputStream());
         cloudHandler = new FileCloudHandler(serverPath, Path.of(""), in, out, socket);
+//кнопка авторизации
         authButtonA.addActionListener(a -> {
             try {
                 if (authorizatior(loginFieldA, passFieldA) == 1) {
@@ -54,7 +55,7 @@ public class AuthorizationGUI extends JFrame {
                 e.printStackTrace();
             }
         });
-
+//кнопка регистрации
         regButtonA.addActionListener(a -> {
             try {
                 if (registr(loginFieldA, passFieldA) == 1) {
@@ -76,7 +77,7 @@ public class AuthorizationGUI extends JFrame {
         });
     }
 
-
+//авторизация
     public int authorizatior(JTextField taAuth, JPasswordField passwordField) throws IOException {
         String msg = "auth\n" + taAuth.getText() + "\n" + passwordField.getText() + "\n";
         out.write(msg.getBytes(StandardCharsets.UTF_8));
@@ -85,7 +86,7 @@ public class AuthorizationGUI extends JFrame {
         System.out.println(b);
         return b;
     }
-
+//регистрация
     public int registr(JTextField taAuth, JPasswordField passwordField) throws IOException {
         String msg = "reg\n" + taAuth.getText() + "\n" + passwordField.getText() + "\n";
         out.write(msg.getBytes(StandardCharsets.UTF_8));
