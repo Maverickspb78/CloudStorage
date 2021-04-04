@@ -33,18 +33,9 @@ public class AuthorizationGUI extends JFrame {
         setVisible(true);
         socket = new Socket("localhost", 1234);
 
-//        socket = cloudHandler.getSocket();
         in = new DataInputStream(socket.getInputStream());
         out = new DataOutputStream(socket.getOutputStream());
-//        cloudHandler.setIn(in);
-//        cloudHandler.setOut(out);
         cloudHandler = new FileCloudHandler(serverPath, Path.of(""), in, out, socket);
-//        this.socket = socket;
-//        this.in = in;
-//        this.out = out;
-//        this.cloudHandler = cloudHandler;
-
-
         authButtonA.addActionListener(a -> {
             try {
                 if (authorizatior(loginFieldA, passFieldA) == 1) {
@@ -74,6 +65,7 @@ public class AuthorizationGUI extends JFrame {
                     cloudGUI.setLocationRelativeTo(null);
                     cloudGUI.setDefaultCloseOperation(DISPOSE_ON_CLOSE);
                     cloudGUI.setVisible(true);
+
                 } else {
                     loginFieldA.setText("this login already used");
                     passFieldA.setText("");
@@ -102,13 +94,4 @@ public class AuthorizationGUI extends JFrame {
         System.out.println(b);
         return b;
     }
-
-
-//    public static void main(String[] args) throws IOException {
-////        AuthorizationGUI dialogA = new AuthorizationGUI();
-////        dialogA.pack();
-////        dialogA.setVisible(true);
-////        System.exit(0);
-//    }
-
 }

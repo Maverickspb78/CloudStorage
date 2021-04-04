@@ -2,6 +2,7 @@
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.SimpleChannelInboundHandler;
 
+import javax.crypto.spec.PSource;
 import java.io.*;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.*;
@@ -13,6 +14,7 @@ import static java.nio.file.FileVisitResult.CONTINUE;
 public class FileHandler extends SimpleChannelInboundHandler<String> {
     private Path serverPath = Path.of("server");
     private DBHandler dbHandler = new DBHandler();
+    private long size;
 
     public Path getServerPath() {
         return serverPath;
@@ -91,17 +93,14 @@ public class FileHandler extends SimpleChannelInboundHandler<String> {
 
         } else if (command.startsWith("auth")) {
             String anser = "" + auth(msg);
-            System.out.println("сработала авторизация");
-            System.out.println(anser);
             if (anser.equals("1")) {
-                ctx.writeAndFlush(anser + "\n" + serverPath.toString() + "\nend");
+                ctx.writeAndFlush(anser + "\n" + serverPath.toString() + "\n" + size +"\nend");
             } else {
                 ctx.writeAndFlush(anser + "\nend");
             }
 
 
-
-        }else if(command.startsWith("createFolder")){
+        } else if (command.startsWith("createFolder")) {
             createFolder(msg.split("\n")[1]);
             ctx.writeAndFlush("msg\n+end");
 
@@ -110,6 +109,8 @@ public class FileHandler extends SimpleChannelInboundHandler<String> {
             remove(ctx, filename);
         } else if (command.startsWith("upload")) {
             filename = msg.split("\n")[1];
+            String lengthSize = msg.split("\n")[2];
+
             int length = command.length() + filename.length() + 2;
             System.out.println(length);
             upload(ctx, msg, length);
@@ -117,16 +118,25 @@ public class FileHandler extends SimpleChannelInboundHandler<String> {
         } else if (command.startsWith("download")) {
             filename = msg.split("\n")[1];
             download(ctx, filename);
-        } else if (command.startsWith("changePass")){
+        } else if (command.startsWith("delAccount")) {
+            if (dbHandler.delAccount()) {
+                removeAcc(ctx);
+                ctx.writeAndFlush("account delete\nend");
+
+            }
+            ctx.writeAndFlush("error\nend");
+
+
+        } else if (command.startsWith("changePass")) {
             System.out.println("changePass");
             String newPass = msg.split("\n")[1];
             if (dbHandler.changePass(newPass)) {
                 ctx.writeAndFlush("password changed\nend");
             } else {
-                ctx.writeAndFlush( "password not changed\nend");
+                ctx.writeAndFlush("password not changed\nend");
             }
 
-        }else {
+        } else {
             System.out.println("Chanel closed");
             ctx.channel().closeFuture();
             ctx.channel().close();
@@ -147,6 +157,8 @@ public class FileHandler extends SimpleChannelInboundHandler<String> {
         String query = "SELECT * FROM Auth WHERE login ='" + login + "' and password = '" + pass + "'";
         b = dbHandler.auth(query, login, pass);
         setServerPath(dbHandler.getServerPath());
+        size = sizeCloud(dbHandler.getServerPath());
+        System.out.println("размер: " + size);
         return b;
     }
 
@@ -164,7 +176,7 @@ public class FileHandler extends SimpleChannelInboundHandler<String> {
 
     private void createFolder(String dirName) throws IOException {
         File file = new File(serverPath + File.separator + dirName);
-        if (!file.exists()){
+        if (!file.exists()) {
             Files.createDirectory(file.toPath());
         }
     }
@@ -175,7 +187,7 @@ public class FileHandler extends SimpleChannelInboundHandler<String> {
             File file = new File(serverPath + File.separator + filename);
 
             if (file.exists()) {
-                if (file.isDirectory()){
+                if (file.isDirectory()) {
                     Path dir = Paths.get(serverPath + File.separator + filename);
                     try {
                         Files.walkFileTree(dir, new SimpleFileVisitor<Path>() {
@@ -266,6 +278,49 @@ public class FileHandler extends SimpleChannelInboundHandler<String> {
 
 
     }
+
+    public void removeAcc(ChannelHandlerContext ctx) throws IOException {
+        Path dir = Paths.get(dbHandler.getServerPath().toString());
+
+            try {
+                Files.walkFileTree(dir, new SimpleFileVisitor<Path>() {
+
+                    @Override
+                    public FileVisitResult visitFile(Path file,
+                                                     BasicFileAttributes attrs) throws IOException {
+
+                        System.out.println("Deleting file: " + file);
+                        Files.delete(file);
+                        return CONTINUE;
+                    }
+
+                    @Override
+                    public FileVisitResult postVisitDirectory(Path dir,
+                                                              IOException exc) throws IOException {
+
+                        System.out.println("Deleting dir: " + dir);
+                        if (exc == null) {
+                            Files.delete(dir);
+                            return CONTINUE;
+                        } else {
+                            throw exc;
+                        }
+                    }
+                });
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+
+        public long sizeCloud(Path serverPath) throws IOException {
+            Path folder = (serverPath);
+            return Files.walk(folder)
+                    .map(Path::toFile)
+                    .filter(File::isFile)
+                    .mapToLong(File::length)
+                    .sum();
+        }
+
 
     @Override
     public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) {

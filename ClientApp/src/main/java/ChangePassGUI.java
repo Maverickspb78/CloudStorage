@@ -23,6 +23,7 @@ public class ChangePassGUI extends JDialog {
             try {
                 if (changePass().equals("password changed")){
                     dispose();
+
                 }
             } catch (IOException e) {
                 e.printStackTrace();

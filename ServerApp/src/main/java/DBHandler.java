@@ -19,7 +19,7 @@ public class DBHandler {
         try {
             Class.forName("org.sqlite.JDBC");
             ///////////////////////////// Write path to DB /////////////////////////////
-            String url = "jdbc:sqlite:C:/study/CloudStorage/SCloudDB";
+            String url = "jdbc:sqlite:SCloudDB";
             ///////////////////////////////////////////////////////////////////////////
             connection = DriverManager.getConnection(url);
             System.out.println("Connection to SQLite has been established.");
@@ -46,16 +46,12 @@ public class DBHandler {
         while (resultSet.next()) {
             setId(resultSet.getInt(1));
             serverPath = Path.of(resultSet.getString("startFolder"));
-            System.out.println(((resultSet.getString("login").equals(login))
-                    && (resultSet.getString("password").equals(pass))
-                    && (resultSet.getInt("already")) == 0));
             if ((resultSet.getString("login").equals(login))
                     && (resultSet.getString("password").equals(pass))
                     && (resultSet.getInt("already")) == 0) {
                 b = 1;
             }
         }
-        System.out.println(id);
         File fileAu = new File(serverPath.toString());
         if (!fileAu.exists()) {
             Files.createDirectory(serverPath);
@@ -94,8 +90,18 @@ public class DBHandler {
     }
 
     public boolean changePass(String newPass) throws SQLException {
-        System.out.println(id);
         String query = "UPDATE Auth set password =" +newPass+" WHERE id = "+id;
+        PreparedStatement preparedStatement = connection.prepareStatement(query);
+        if (preparedStatement.executeUpdate() ==1){
+            return true;
+        }
+        preparedStatement.close();
+
+        return false;
+    }
+
+    public boolean delAccount() throws SQLException {
+        String query = "DELETE FROM Auth  WHERE id = "+id;
         PreparedStatement preparedStatement = connection.prepareStatement(query);
         if (preparedStatement.executeUpdate() ==1){
             return true;

@@ -13,6 +13,7 @@ public class FileCloudHandler {
     private DataInputStream in;
     private DataOutputStream out;
     private Socket socket;
+    private long sizeCloud;
 
     public FileCloudHandler(Path serverPath, Path clientPath, DataInputStream in, DataOutputStream out, Socket socket) {
         this.serverPath = serverPath;
@@ -22,7 +23,7 @@ public class FileCloudHandler {
         this.socket = socket;
     }
 
-    public FileCloudHandler(){
+    public FileCloudHandler() {
 
     }
 
@@ -72,15 +73,15 @@ public class FileCloudHandler {
             if (!file.exists()) {
                 file.createNewFile();
 
-                out.write(("download\n" + filename+"\n").getBytes(StandardCharsets.UTF_8));
+                out.write(("download\n" + filename + "\n").getBytes(StandardCharsets.UTF_8));
                 out.flush();
 
                 FileOutputStream fos = new FileOutputStream(clientPath + File.separator + filename);
                 while (true) {
                     byte[] buffer = new byte[512];
                     int size = in.read(buffer);
-                    fos.write(buffer,0,size);
-                    if (in.available()<1) {
+                    fos.write(buffer, 0, size);
+                    if (in.available() < 1) {
                         break;
                     }
                 }
@@ -121,9 +122,9 @@ public class FileCloudHandler {
         return "Something error";
     }
 
-    public String remove(String filename, String position){
+    public String remove(String filename, String position) {
         try {
-            if (position.equals("server")){
+            if (position.equals("server")) {
                 File file = new File(serverPath + File.separator + filename);
                 if (file.exists()) {
                     String msg = "remove " + filename;
@@ -134,8 +135,7 @@ public class FileCloudHandler {
                 } else {
                     return "File is not exists";
                 }
-            }
-            else {
+            } else {
                 File file = new File(clientPath + File.separator + filename);
                 if (file.exists()) {
                     if (file.isDirectory()) {
@@ -207,19 +207,15 @@ public class FileCloudHandler {
                 break;
             }
         }
-        System.out.println(sbr.toString());
-
-
-        if ((sbr.toString().startsWith("1"))&&(sbr.toString().split("\n")[0].equals("1"))){
-            serverPath = (Path.of(sbr.substring(2,sbr.toString().length()-4)));
-            System.out.println(sbr.length());
-
-
-
-            System.out.println(sbr.substring((2+sbr.toString().split("\n")[1].length()),sbr.toString().length()-4));
-            return sbr.substring(0,1);
+        if ((sbr.toString().startsWith("1")) && (sbr.toString().split("\n")[0].equals("1"))) {
+            serverPath = (Path.of(sbr.toString().split("\n")[1]));
+            sizeCloud = Long.parseLong(sbr.toString().split("\n")[2]);
+            return sbr.substring(0, 1);
         }
-
         return sbr.substring(0, sbr.toString().length() - 4);
+    }
+
+    public long getSizeCloud() {
+        return sizeCloud;
     }
 }

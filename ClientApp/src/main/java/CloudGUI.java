@@ -68,33 +68,21 @@ public class CloudGUI extends JFrame {
     }
 
     public CloudGUI(Socket socket, FileCloudHandler cloudHandler) throws IOException {
+        setResizable(false);
         this.socket = socket;
         this.cloudHandler = cloudHandler;
-
         in = new DataInputStream(socket.getInputStream());
         out = new DataOutputStream(socket.getOutputStream());
-//        cloudHandler = new FileCloudHandler(serverPath,clientPath, in , out , socket);
         listHandler = new ListHandler(cloudHandler.getServerPath(), cloudHandler.getClientPath(), socket, in, out);
-
-
-//        frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-//        frame.setSize(new Dimension(width,height));
-//        frame.setLocationRelativeTo(null);
-
         setContentPane(contentPane);
         setVisible(true);
-//        setModal(true);
         list1.setModel(myModel);
         list2.setModel(myModel2);
-
         serverPath = cloudHandler.getServerPath();
         clientPath = cloudHandler.getClientPath();
-//        listHandler.setServerPath(serverPath);
-//        listHandler.setClientPath(clientPath);
-
         listHandler.fillList(myModel, serverPath);
         listHandler.clientList(myModel2, clientPath, "out");
-
+        sizeLable.setText("" + cloudHandler.getSizeCloud()+ " из " + "Size" );
 
         downloadButton.addActionListener(a -> {
             cloudHandler.setServerPath(serverPath);
@@ -165,6 +153,12 @@ public class CloudGUI extends JFrame {
         });
 
         searchButton.addActionListener(a -> {
+            if ((taC.getText().equals(""))) {
+                list1.setSelectedIndex(listHandler.search(taS.getText(), myModel));
+            }
+            if (taS.getText().equals("")){
+                list2.setSelectedIndex(listHandler.search(taC.getText(), myModel2));
+            }
 
         });
 
@@ -242,11 +236,13 @@ public class CloudGUI extends JFrame {
 
             }
             if (menuBox.getSelectedItem().toString().equals("changePass")){
-                System.out.println("changePass");
                 new ChangePassGUI(cloudHandler);
                 menuBox.setSelectedIndex(0);
             }
             if (menuBox.getSelectedItem().toString().equals("removeAccount")){
+                new DelAccountGui(cloudHandler);
+                menuBox.setSelectedIndex(0);
+
 
             }
         });
