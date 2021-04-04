@@ -23,10 +23,6 @@ public class FileCloudHandler {
         this.socket = socket;
     }
 
-    public FileCloudHandler() {
-
-    }
-
     public DataInputStream getIn() {
         return in;
     }
@@ -67,6 +63,7 @@ public class FileCloudHandler {
         this.out = out;
     }
 
+//    скачка файла с сервера
     public String downloadFile(String filename) {
         try {
             File file = new File(clientPath + File.separator + filename);
@@ -96,7 +93,7 @@ public class FileCloudHandler {
         }
         return "Something error";
     }
-
+// загрузка файла на сервер
     public String sendFile(String filename) {
         try {
             File file = new File(clientPath + File.separator + filename);
@@ -121,7 +118,7 @@ public class FileCloudHandler {
         }
         return "Something error";
     }
-
+// удаление файла\папки
     public String remove(String filename, String position) {
         try {
             if (position.equals("server")) {
@@ -183,7 +180,7 @@ public class FileCloudHandler {
         }
         return "Something error";
     }
-
+// создание директории
     public void createFolder(JTextField textArea, String pos) throws IOException {
         if (pos.equals("right")) {
             if (!new File(clientPath + File.separator + textArea.getText()).exists()) {
@@ -196,7 +193,7 @@ public class FileCloudHandler {
             readMsg(in);
         } else System.out.println("wrong null name folder");
     }
-
+// чтение с сервера сообщения
     public String readMsg(DataInputStream in) throws IOException {
         StringBuilder sbr = new StringBuilder();
         while (true) {

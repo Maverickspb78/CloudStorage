@@ -14,7 +14,6 @@ public class DBHandler {
     int id = 0;
 
 
-
     public DBHandler() {
         try {
             Class.forName("org.sqlite.JDBC");
@@ -37,10 +36,15 @@ public class DBHandler {
         this.id = id;
     }
 
+     /*
+     authorization
+     Стандартная авторизация
+     */
+
     public int auth(String query, String login, String pass) throws SQLException, IOException {
         this.login = login;
         this.pass = pass;
-        int b =0;
+        int b = 0;
         statement = connection.createStatement();
         resultSet = statement.executeQuery(query);
         while (resultSet.next()) {
@@ -63,7 +67,11 @@ public class DBHandler {
         return b;
     }
 
-    public int registration(String query,String query1, String login, String pass) {
+        /*
+        registration
+        Стандартная регистрация
+        */
+    public int registration(String query, String query1, String login, String pass) {
         this.login = login;
         this.pass = pass;
         int b = 0;
@@ -89,10 +97,13 @@ public class DBHandler {
         return serverPath;
     }
 
+    /*
+    Смена пароля поиск записи по id
+     */
     public boolean changePass(String newPass) throws SQLException {
-        String query = "UPDATE Auth set password =" +newPass+" WHERE id = "+id;
+        String query = "UPDATE Auth set password =" + newPass + " WHERE id = " + id;
         PreparedStatement preparedStatement = connection.prepareStatement(query);
-        if (preparedStatement.executeUpdate() ==1){
+        if (preparedStatement.executeUpdate() == 1) {
             return true;
         }
         preparedStatement.close();
@@ -100,10 +111,13 @@ public class DBHandler {
         return false;
     }
 
+    /*
+    Удаление аккаунта по id
+     */
     public boolean delAccount() throws SQLException {
-        String query = "DELETE FROM Auth  WHERE id = "+id;
+        String query = "DELETE FROM Auth  WHERE id = " + id;
         PreparedStatement preparedStatement = connection.prepareStatement(query);
-        if (preparedStatement.executeUpdate() ==1){
+        if (preparedStatement.executeUpdate() == 1) {
             return true;
         }
         preparedStatement.close();

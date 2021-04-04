@@ -81,7 +81,7 @@ public class ListHandler {
             }
         }
     }
-
+// получение списка дисков
     public void clientList(DefaultListModel<String> myModel2, Path clientPath, String out) {
         this.clientPath = clientPath;
         String arg = FileSystems.getDefault().getRootDirectories().toString();
@@ -94,7 +94,7 @@ public class ListHandler {
             myModel2.addElement(fil);
         }
     }
-
+// получение списка файлов директории с сервера
     public void fillList(DefaultListModel<String> myModel, Path path) throws IOException {
         this.serverPath = path;
         List<String> list = downloadFileList();
@@ -144,7 +144,7 @@ public class ListHandler {
 
         return list;
     }
-
+// поиск файлов\папок
     public int search(String name, DefaultListModel<String> list) {
         int index = 0;
             for (int i =0; i <list.size(); i ++){

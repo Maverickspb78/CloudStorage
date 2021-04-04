@@ -14,7 +14,7 @@ import java.util.Arrays;
 import java.util.List;
 
 public class Client extends JFrame{
-
+//запуск
 	public static void main(String[] args) throws IOException {
 		AuthorizationGUI authorizationGUI = new AuthorizationGUI();
 		authorizationGUI.setSize(300,150);
